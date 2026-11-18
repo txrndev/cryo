@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRYO // Role-Based Command Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #06080f;
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.16), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.12), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.14), transparent 45%);
+    }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    @keyframes modalEntrance {
+      0% { opacity: 0; transform: scale(0.9) translateY(18px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: modalEntrance 0.34s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.25); }
+      50% { box-shadow: 0 0 42px rgba(99, 102, 241, 0.48); }
+    }
+    .glow-ring { animation: pulseGlow 3.5s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- =====================================================================
+       GAMES CATEGORY MODAL (AI GAMES vs GAMES)
+       ===================================================================== -->
+  <div id="games-list-modal" onclick="if (event.target === this) closeGamesListModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+    <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-7 border border-cyan-400/40 shadow-2xl animate-modal">
+      <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🎮</span>
+          <div>
+            <h3 id="games-modal-title" class="text-base font-black text-white">Games Hub</h3>
+            <p id="games-modal-subtitle" class="text-xs text-slate-400">Choose a category</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="games-back-to-cats-btn" onclick="showGamesCategories()" class="hidden px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-cyan-300 transition">
+            ← Categories
+          </button>
+          <button type="button" onclick="closeGamesListModal(); toggleDeviceDockModal();" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+            ← Modules
+          </button>
+          <button type="button" onclick="closeGamesListModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+            Close ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 1: TWO CATEGORY BOXES (AI GAMES & GAMES) -->
+      <div id="games-category-boxes" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Box 1: AI Games -->
+        <button type="button" onclick="openGameCategory('ai')" class="group h-40 rounded-2xl bg-slate-900/95 hover:bg-slate-800/95 border border-indigo-500/45 hover:border-indigo-400 p-5 flex flex-col items-center justify-center gap-2.5 shadow-xl transition-all hover:-translate-y-1">
+          <span class="text-4xl group-hover:scale-110 transition">🤖</span>
+          <span class="text-base font-black text-white group-hover:text-indigo-300 transition">AI Games</span>
+          <span class="text-[11px] text-slate-400 text-center">Original Cryo AI-powered arcade & strategy games</span>
+        </button>
+
+        <!-- Box 2: Games -->
+        <button type="button" onclick="openGameCategory('standard')" class="group h-40 rounded-2xl bg-slate-900/95 hover:bg-slate-800/95 border border-emerald-500/45 hover:border-emerald-400 p-5 flex flex-col items-center justify-center gap-2.5 shadow-xl transition-all hover:-translate-y-1">
+          <span class="text-4xl group-hover:scale-110 transition">♟️</span>
+          <span class="text-base font-black text-white group-hover:text-emerald-300 transition">Games</span>
+          <span class="text-[11px] text-slate-400 text-center">Classic multiplayer & bot board games</span>
+        </button>
+      </div>
+
+      <!-- STEP 2A: STANDARD GAMES LIST (CHESS) -->
+      <div id="games-standard-list" class="hidden grid grid-cols-1 gap-3">
+        <button type="button" onclick="launchCryoChess()" class="group w-full text-left p-4 rounded-2xl bg-slate-900/95 hover:bg-slate-800 border border-emerald-500/40 hover:border-emerald-400 flex items-center justify-between gap-4 shadow-lg transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/35 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              ♟️
+            </div>
+            <div>
+              <div class="text-sm font-black text-white group-hover:text-emerald-300 transition">Chess</div>
+              <div class="text-xs text-slate-400 mt-0.5">Play Online with Friends, Local 2-Player, or vs. AI Bots</div>
+            </div>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-extrabold shrink-0">Play →</span>
+        </button>
+      </div>
+
+      <!-- STEP 2B: AI GAMES LIST (ORIGINAL CRYO AI GAMES) -->
+      <div id="games-ai-list" class="hidden grid grid-cols-1 gap-3">
+        <button type="button" onclick="launchCryoAiArena('cyber-pong')" class="group w-full text-left p-4 rounded-2xl bg-slate-900/95 hover:bg-slate-800 border border-indigo-500/40 hover:border-indigo-400 flex items-center justify-between gap-4 shadow-lg transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-400/35 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              ⚡
+            </div>
+            <div>
+              <div class="text-sm font-black text-white group-hover:text-indigo-300 transition">Cryo Neural Pong</div>
+              <div class="text-xs text-slate-400 mt-0.5">Face an adaptive Cryo AI paddle that learns your shot angles in real time</div>
+            </div>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs font-extrabold shrink-0">Play →</span>
+        </button>
+
+        <button type="button" onclick="launchCryoAiArena('quantum-dodge')" class="group w-full text-left p-4 rounded-2xl bg-slate-900/95 hover:bg-slate-800 border border-cyan-500/40 hover:border-cyan-400 flex items-center justify-between gap-4 shadow-lg transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/35 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              🚀
+            </div>
+            <div>
+              <div class="text-sm font-black text-white group-hover:text-cyan-300 transition">Cryo Asteroid Surge</div>
+              <div class="text-xs text-slate-400 mt-0.5">Pilot your Cryo ship, blast incoming meteors, and survive AI-directed waves</div>
+            </div>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-extrabold shrink-0">Play →</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       CRYO AI GAMES ARCADE MODAL (NEURAL PONG & ASTEROID SURGE)
+       ===================================================================== -->
+  <div id="cryo-ai-game-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/90 backdrop-blur-xl">
+    <div class="glass-panel w-full max-w-3xl rounded-3xl p-4 sm:p-6 border border-indigo-400/40 shadow-2xl animate-modal">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span id="ai-game-icon" class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-xl">⚡</span>
+          <div>
+            <h3 id="ai-game-title" class="text-base font-black text-white">Cryo Neural Pong</h3>
+            <p id="ai-game-subtitle" class="text-xs text-slate-400">Move mouse or Up/Down arrows to control your paddle</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="restartCryoAiGame()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-extrabold text-white transition">
+            🔄 Restart
+          </button>
+          <button type="button" onclick="closeCryoAiGame()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-600/80 text-xs font-bold text-slate-200 transition">
+            Exit ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Scoreboard -->
+      <div class="flex items-center justify-between px-4 py-2.5 mb-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs font-extrabold">
+        <span id="ai-game-score-left" class="text-cyan-300">You: 0</span>
+        <span id="ai-game-status" class="text-slate-300">First to 7 wins!</span>
+        <span id="ai-game-score-right" class="text-indigo-300">Cryo AI: 0</span>
+      </div>
+
+      <!-- Game Canvas -->
+      <div class="w-full rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-inner">
+        <canvas id="cryo-ai-canvas" class="w-full h-[340px] sm:h-[400px] block cursor-crosshair"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       TOP NAVIGATION (MINIMAL BRAND + ROLE SWITCHER)
+       ===================================================================== -->
+  <header class="sticky top-0 z-30 glass-panel border-b border-slate-800/80">
+    <div class="w-full max-w-[1680px] mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+      <!-- Brand -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600 flex items-center justify-center text-base shadow-lg">
+          ❄️
+        </div>
+        <span id="site-brand-title" class="font-black text-lg tracking-tight text-white">CRYO</span>
+      </div>
+
+      <!-- Active Role Badge & Switcher -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="toggleDeviceDockModal()" title="Open Modules" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-cyan-500/40 hover:border-cyan-400 text-xs font-extrabold text-cyan-300 shadow-lg transition">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2" width="12" height="20" rx="6"></rect>
+            <line x1="12" y1="6" x2="12" y2="10"></line>
+          </svg>
+          <span class="hidden sm:inline">Modules</span>
+        </button>
+        <span id="current-role-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-slate-800 text-slate-300 border border-slate-700">
+          ● Guest
+        </span>
+        <button onclick="openRoleModal()" class="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white transition">
+          Switch Role
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       MAIN WORKSPACE (CENTERED WIDE CRYO SEARCH)
+       ===================================================================== -->
+  <main class="flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 py-8 flex flex-col items-center justify-center gap-6">
+
+    <!-- CENTERED WIDE CRYO SEARCH BAR -->
+    <section class="w-full max-w-5xl flex flex-col items-center gap-5">
+      <div class="text-center select-none">
+        <div class="text-4xl sm:text-6xl font-black tracking-tight flex items-center justify-center gap-2">
+          <span>❄️</span>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-indigo-400">Cryo</span>
+          <span class="text-white">Search</span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Instant full answers, live Google knowledge & visual gallery</p>
+      </div>
+
+      <div class="w-full relative">
+        <form onsubmit="handleUniversalSearchSubmit(event)" class="relative flex items-center w-full">
+          <span class="absolute left-5 flex items-center gap-1.5 font-black text-sm sm:text-base pointer-events-none select-none text-cyan-300" title="Cryo Search">
+            <span>❄️</span><span>Cryo</span>
+          </span>
+          <input id="universal-search-input" type="text" oninput="handleLiveFilter(this.value)" onfocus="showSearchSuggestions()"
+                 placeholder="Ask Cryo Search anything... (Press /)" autocomplete="off"
+                 class="w-full pl-24 sm:pl-28 pr-28 py-4 sm:py-5 rounded-full bg-slate-900/95 border border-slate-700/90 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 outline-none text-sm sm:text-base text-white placeholder-slate-400 shadow-2xl transition" />
+          <button type="button" id="clear-search-btn" onclick="clearSearch()" title="Clear search"
+                  class="hidden absolute right-24 px-2 py-1 text-slate-400 hover:text-white text-sm font-bold transition">
+            ✕
+          </button>
+          <button type="submit"
+                  class="absolute right-2 px-5 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition">
+            Search
+          </button>
+        </form>
+        <div id="google-autocomplete-box" class="hidden absolute left-0 right-0 mt-2 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl overflow-hidden z-40"></div>
+      </div>
+
+      <!-- MOUSE MODULES & SCHOOL HELP LAUNCHER BOXES -->
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <!-- Box 1: Modules -->
+        <button type="button" onclick="toggleDeviceDockModal()" class="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/90 hover:border-cyan-400/70 shadow-xl transition-all duration-200 hover:-translate-y-0.5">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/35 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="2" width="12" height="20" rx="6"></rect>
+              <line x1="12" y1="6" x2="12" y2="10"></line>
+            </svg>
+          </div>
+          <div class="text-left">
+            <div class="text-xs font-extrabold text-white group-hover:text-cyan-300 transition">Modules</div>
+            <div class="text-[11px] text-slate-400">Click to open boxes</div>
+          </div>
+        </button>
+
+        <!-- Box 2: School Help -->
+        <button type="button" onclick="toggleSchoolHelpModal()" class="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/90 hover:border-indigo-400/70 shadow-xl transition-all duration-200 hover:-translate-y-0.5">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-400/35 flex items-center justify-center text-indigo-300 group-hover:scale-105 transition text-lg">
+            🎓
+          </div>
+          <div class="text-left">
+            <div class="text-xs font-extrabold text-white group-hover:text-indigo-300 transition">School Help</div>
+            <div class="text-[11px] text-slate-400">Math, ELA, Science & Study</div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- CRYO SEARCH RESULTS POP-UP VIEW (APPEARS WHEN SEARCHING ANYTHING) -->
+    <section id="search-answer-panel" class="hidden w-full max-w-6xl glass-panel rounded-3xl p-5 sm:p-7 border border-cyan-400/50 shadow-[0_0_50px_rgba(34,211,238,0.18)] animate-modal">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="px-3 py-1 rounded-xl bg-slate-950 border border-cyan-500/40 font-black text-sm tracking-tight text-cyan-300 flex items-center gap-1.5">
+            <span>❄️</span><span>Cryo Search</span>
+          </div>
+          <div>
+            <h3 id="search-result-heading" class="text-sm sm:text-base font-black text-white">Complete Answer & Visuals</h3>
+            <p id="search-query-subtitle" class="text-[11px] text-slate-400">Searching...</p>
+          </div>
+        </div>
+        <button onclick="closeSearchPanel()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+          Close ✕
+        </button>
+      </div>
+
+      <!-- Cryo Result Filter Tabs -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-slate-800/80 text-xs font-bold">
+        <button type="button" onclick="switchGoogleTab('all')" id="gtab-all" class="gtab-btn px-3.5 py-1.5 rounded-full bg-cyan-500 text-slate-950 font-extrabold transition shrink-0">
+          🔍 Full Answer
+        </button>
+        <button type="button" onclick="switchGoogleTab('images')" id="gtab-images" class="gtab-btn px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shrink-0">
+          🖼️ Pictures Gallery
+        </button>
+        <button type="button" onclick="switchGoogleTab('facts')" id="gtab-facts" class="gtab-btn px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shrink-0">
+          ⚡ Key Facts
+        </button>
+        <button type="button" onclick="switchGoogleTab('news')" id="gtab-news" class="gtab-btn px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shrink-0">
+          📰 Deep Dive
+        </button>
+      </div>
+
+      <div id="search-loading" class="hidden py-10 flex flex-col items-center justify-center gap-3 text-xs font-bold text-cyan-300">
+        <span class="w-7 h-7 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
+        <span>Cryo Search is gathering the complete Google answer & pictures...</span>
+      </div>
+
+      <!-- Instant Smart Tool Box (Calculator / Converter / Definition) -->
+      <div id="search-instant-widget" class="hidden mb-5 p-4 rounded-2xl bg-gradient-to-r from-cyan-500/15 to-blue-600/15 border border-cyan-400/40 flex items-center justify-between gap-4">
+        <div>
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-cyan-300">⚡ Instant Cryo Calculator</div>
+          <div id="instant-widget-value" class="text-xl sm:text-2xl font-black text-white mt-0.5"></div>
+          <div id="instant-widget-sub" class="text-xs text-slate-400 mt-0.5"></div>
+        </div>
+        <span class="text-2xl">🧮</span>
+      </div>
+
+      <!-- TAB VIEW 1: ALL RESULTS (Full Answer + Key Facts + Images + Follow-ups) -->
+      <div id="gview-all" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Left / Main Column: Full Detailed Answer & Key Highlights -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+          <div id="search-result-body" class="text-sm sm:text-[15px] text-slate-200 leading-relaxed bg-slate-950/90 rounded-2xl p-5 border border-cyan-500/25 shadow-inner"></div>
+          <div id="search-key-facts" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- Right Column: Visual Pictures & Related Quick Topics -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          <div id="search-visual-card" class="rounded-2xl overflow-hidden bg-slate-950/90 border border-slate-800/90 shadow-xl">
+            <div id="search-image-loader" class="h-56 flex flex-col items-center justify-center gap-2 text-xs text-slate-400 bg-slate-900/60">
+              <span class="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
+              <span>Generating pictures for your search...</span>
+            </div>
+            <img id="search-generated-img" alt="Search result visual" class="hidden w-full h-60 object-cover" />
+            <div class="px-4 py-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span id="search-image-caption" class="truncate font-semibold text-slate-300">Visual Overview</span>
+              <button type="button" onclick="switchGoogleTab('images')" class="text-cyan-300 hover:underline font-bold shrink-0">View All Pictures →</button>
+            </div>
+          </div>
+
+          <!-- People Also Search For -->
+          <div id="search-related-box" class="bg-slate-950/85 rounded-2xl p-4 border border-slate-800/90">
+            <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">People Also Search For</div>
+            <div id="search-related-list" class="flex flex-col gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB VIEW 2: IMAGES GALLERY -->
+      <div id="gview-images" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-extrabold text-slate-300">Visual Gallery for "<span id="gallery-query-label" class="text-white"></span>"</span>
+          <button type="button" onclick="generateMoreGalleryImages()" class="px-3 py-1.5 rounded-xl bg-[#4285F4] hover:bg-[#3367d6] text-white text-xs font-extrabold transition">
+            + Generate More Pictures
+          </button>
+        </div>
+        <div id="search-images-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- TAB VIEW 3: KEY FACTS & BREAKDOWN -->
+      <div id="gview-facts" class="hidden">
+        <div id="search-facts-detailed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- TAB VIEW 4: LATEST UPDATES & DEEP DIVE -->
+      <div id="gview-news" class="hidden">
+        <div id="search-news-detailed" class="bg-slate-950/85 rounded-2xl p-5 border border-slate-800/90 text-sm text-slate-200 leading-relaxed space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- ADMIN-ONLY COMMAND CENTER (HIDDEN FOR GUESTS) -->
+    <section id="admin-control-panel" class="hidden w-full max-w-5xl glass-panel rounded-3xl p-5 sm:p-6 border border-indigo-500/35 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-base">🛡️</span>
+          <div>
+            <h2 class="text-base font-black text-white">Admin Controls</h2>
+            <p class="text-xs text-slate-400">Root session active. Rebrand the portal title below.</p>
+          </div>
+        </div>
+
+        <!-- Quick Site Rebrander -->
+        <div class="flex items-center gap-2">
+          <input id="site-name-editor" type="text" value="CRYO" maxlength="18" placeholder="Portal Name"
+                 class="w-32 sm:w-44 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 outline-none text-xs text-white font-bold" />
+          <button onclick="updateSiteName()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold text-cyan-300 border border-slate-700 transition">
+            Rename Site
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 glass-panel border border-indigo-500/50 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold hidden z-50"></div>
+
+  <!-- =====================================================================
+       SCHOOL HELP MODAL (MATH, ELA, SCIENCE & SOCIAL STUDIES ASSISTANT)
+       ===================================================================== -->
+  <div id="school-help-modal" onclick="if (event.target === this) toggleSchoolHelpModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-7 border border-indigo-400/40 shadow-2xl animate-modal">
+      <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-400/35 flex items-center justify-center text-lg">
+            🎓
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">School Help</h3>
+            <p class="text-xs text-slate-400">Pick a subject to get instant step-by-step answers & study guides</p>
+          </div>
+        </div>
+        <button type="button" onclick="toggleSchoolHelpModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+          Close ✕
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <!-- Subject 1: Math -->
+        <button type="button" onclick="launchSchoolTopic('solve 3x + 7 = 22')" class="group text-left p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/35 hover:border-cyan-400 transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="text-2xl">📐</span>
+            <span class="text-sm font-black text-white group-hover:text-cyan-300 transition">Math Solver</span>
+          </div>
+          <p class="text-xs text-slate-400">Algebra equations, geometry formulas, fractions, prime factorization & arithmetic</p>
+        </button>
+
+        <!-- Subject 2: ELA -->
+        <button type="button" onclick="launchSchoolTopic('thesis statement')" class="group text-left p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-indigo-500/35 hover:border-indigo-400 transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="text-2xl">✍️</span>
+            <span class="text-sm font-black text-white group-hover:text-indigo-300 transition">ELA & Writing</span>
+          </div>
+          <p class="text-xs text-slate-400">Thesis statements, metaphors vs. similes, word syllable analyzer & reading time</p>
+        </button>
+
+        <!-- Subject 3: Science -->
+        <button type="button" onclick="launchSchoolTopic('photosynthesis')" class="group text-left p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/35 hover:border-emerald-400 transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="text-2xl">🔬</span>
+            <span class="text-sm font-black text-white group-hover:text-emerald-300 transition">Science Lab</span>
+          </div>
+          <p class="text-xs text-slate-400">Biology (mitosis, DNA, cells), Periodic Table elements, Newton’s Laws & space</p>
+        </button>
+
+        <!-- Subject 4: Social Studies & History -->
+        <button type="button" onclick="launchSchoolTopic('american revolution')" class="group text-left p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-amber-500/35 hover:border-amber-400 transition-all hover:-translate-y-0.5">
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <span class="text-2xl">🌍</span>
+            <span class="text-sm font-black text-white group-hover:text-amber-300 transition">History & Geography</span>
+          </div>
+          <p class="text-xs text-slate-400">World history events, all 50 U.S. state capitals, world capitals & century lookups</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODULES BOXES POP-UP MODAL (GAMES + BLANK SLOTS FOR FUTURE USE)
+       ===================================================================== -->
+  <div id="device-dock-modal" onclick="if (event.target === this) toggleDeviceDockModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-7 border border-cyan-400/40 shadow-2xl animate-modal">
+      <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/35 flex items-center justify-center text-cyan-300">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 fill-none stroke-current" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="2" width="12" height="20" rx="6"></rect>
+              <line x1="12" y1="6" x2="12" y2="10"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">Modules</h3>
+            <p class="text-xs text-slate-400">Select a module below</p>
+          </div>
+        </div>
+        <button type="button" onclick="toggleDeviceDockModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+          Close ✕
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <!-- Box 1: Games -->
+        <button type="button" onclick="openGamesBox()" class="group h-32 rounded-2xl bg-slate-900/90 hover:bg-slate-800/95 border border-cyan-500/40 hover:border-cyan-400 p-4 flex flex-col items-center justify-center gap-2 shadow-lg transition-all hover:-translate-y-1">
+          <span class="text-3xl group-hover:scale-110 transition">🎮</span>
+          <span class="text-sm font-black text-white group-hover:text-cyan-300 transition">Games</span>
+        </button>
+
+        <!-- Box 2: Blank -->
+        <div class="h-32 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 p-4 flex items-center justify-center"></div>
+
+        <!-- Box 3: Blank -->
+        <div class="h-32 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 p-4 flex items-center justify-center"></div>
+
+        <!-- Box 4: Blank -->
+        <div class="h-32 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 p-4 flex items-center justify-center"></div>
+
+        <!-- Box 5: Blank -->
+        <div class="h-32 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 p-4 flex items-center justify-center"></div>
+
+        <!-- Box 6: Blank -->
+        <div class="h-32 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 p-4 flex items-center justify-center"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       FULL INTERACTIVE CHESS ARENA MODAL (ONLINE + FRIENDS + BOTS)
+       ===================================================================== -->
+  <div id="cryo-chess-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/90 backdrop-blur-xl overflow-y-auto">
+    <div class="glass-panel w-full max-w-5xl rounded-3xl p-4 sm:p-6 border border-emerald-400/40 shadow-2xl animate-modal my-auto">
+      <!-- Top Chess Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-xl">♟️</span>
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              Cryo Chess
+              <span id="cc-mode-badge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">vs Bot</span>
+            </h3>
+            <p id="cc-status-text" class="text-xs text-slate-400">White to move</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="ccFlipBoard()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition">
+            🔄 Flip
+          </button>
+          <button type="button" onclick="closeCryoChess()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-600/80 text-xs font-bold text-slate-200 transition">
+            Exit Chess ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Chess Layout: Left Board + Right Controls -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Board Column -->
+        <div class="lg:col-span-7 flex flex-col items-center gap-2">
+          <!-- Opponent Info Bar -->
+          <div class="w-full max-w-[460px] flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+            <div class="flex items-center gap-2">
+              <span id="cc-top-avatar" class="text-base">🤖</span>
+              <span id="cc-top-name" class="font-extrabold text-white">Cryo Bot (1200)</span>
+            </div>
+            <span id="cc-top-captured" class="text-slate-300 font-bold tracking-tight"></span>
+          </div>
+
+          <!-- 8x8 Chessboard -->
+          <div class="relative w-full max-w-[460px] aspect-square rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl select-none">
+            <div id="cc-board" class="grid grid-cols-8 grid-rows-8 w-full h-full"></div>
+
+            <!-- Promotion Picker -->
+            <div id="cc-promo-overlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-20">
+              <div class="bg-slate-900 p-4 rounded-2xl border border-emerald-400/50 flex gap-3" id="cc-promo-choices"></div>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div id="cc-gameover-overlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4 z-20">
+              <div class="bg-slate-900 border border-emerald-400/40 rounded-2xl p-5 text-center max-w-xs w-full shadow-2xl">
+                <div class="text-3xl mb-1">🏆</div>
+                <h4 id="cc-gameover-title" class="text-lg font-black text-white">Checkmate!</h4>
+                <p id="cc-gameover-sub" class="text-xs text-slate-400 mt-1 mb-4">White wins the match</p>
+                <button type="button" onclick="ccStartNewGame()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition">
+                  Play Again
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Player Info Bar -->
+          <div class="w-full max-w-[460px] flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-base">❄️</span>
+              <span id="cc-bottom-name" class="font-extrabold text-white">You (White)</span>
+            </div>
+            <span id="cc-bottom-captured" class="text-slate-300 font-bold tracking-tight"></span>
+          </div>
+        </div>
+
+        <!-- Controls & Modes Column -->
+        <div class="lg:col-span-5 flex flex-col gap-3">
+          <!-- Mode Selector -->
+          <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800">
+            <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Choose Game Mode</div>
+            <div class="grid grid-cols-3 gap-2 text-xs font-extrabold">
+              <button type="button" onclick="ccSetMode('bot')" id="cc-mode-bot" class="py-2 px-2 rounded-xl bg-emerald-500 text-slate-950 transition">
+                🤖 vs Bot
+              </button>
+              <button type="button" onclick="ccSetMode('friend')" id="cc-mode-friend" class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+                👥 With Friend
+              </button>
+              <button type="button" onclick="ccSetMode('online')" id="cc-mode-online" class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+                🌐 Online Room
+              </button>
+            </div>
+
+            <!-- Bot Difficulty Selector -->
+            <div id="cc-bot-options" class="mt-3 pt-3 border-t border-slate-800">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <span class="text-slate-400 font-bold">Bot Strength:</span>
+                <select id="cc-bot-level" onchange="ccStartNewGame()" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-white outline-none">
+                  <option value="1">Beginner (400 Elo)</option>
+                  <option value="2" selected>Intermediate (1200 Elo)</option>
+                  <option value="3">Master (2000 Elo)</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400 font-bold">Play As:</span>
+                <div class="flex gap-1.5">
+                  <button type="button" onclick="ccChooseSide('w')" id="cc-side-w" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold">♔ White</button>
+                  <button type="button" onclick="ccChooseSide('b')" id="cc-side-b" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-slate-300 font-bold">♚ Black</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Online Multiplayer Room Box -->
+            <div id="cc-online-options" class="hidden mt-3 pt-3 border-t border-slate-800 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <button type="button" onclick="ccCreateOnlineRoom()" class="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
+                  + Create Room Code
+                </button>
+                <div id="cc-room-display" class="hidden px-3 py-1.5 rounded-xl bg-slate-950 border border-cyan-400/50 font-mono-code text-xs font-bold text-cyan-300">
+                  ------
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input id="cc-join-code" type="text" maxlength="6" placeholder="Enter 6-char room code" class="flex-1 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs font-mono-code uppercase text-white outline-none focus:border-cyan-400" />
+                <button type="button" onclick="ccJoinOnlineRoom()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold text-white transition">
+                  Join
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400">Open another tab or share the code to play live move-by-move!</p>
+            </div>
+          </div>
+
+          <!-- Move History -->
+          <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Move History</span>
+              <span id="cc-move-count" class="text-[11px] font-bold text-slate-500">0 moves</span>
+            </div>
+            <div id="cc-move-list" class="h-36 overflow-y-auto bg-slate-950/90 rounded-xl p-2.5 border border-slate-800/80 text-xs font-mono-code text-slate-300 space-y-1">
+              <div class="text-slate-500 italic">Click a piece on the board to start...</div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="ccUndoMove()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold text-slate-200 transition">
+              ↩ Undo Move
+            </button>
+            <button type="button" onclick="ccStartNewGame()" class="py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition">
+              🔄 New Game
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // PORTAL STATE, ROLE SWITCHER, MODULES HUB, AI GAMES & CRYO CHESS
+    // =========================================================================
+    let currentRole = 'guest';
+    let liveFilterText = '';
+    let lastSearchQuery = '';
+    let galleryImagesList = [];
+    let currentGoogleTab = 'all';
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.add('hidden'), 2600);
+    }
+
+    function openRoleModal() {
+      const next = currentRole === 'guest' ? 'admin' : 'guest';
+      currentRole = next;
+      const badge = document.getElementById('current-role-badge');
+      const adminPanel = document.getElementById('admin-control-panel');
+      if (next === 'admin') {
+        badge.textContent = '🛡️ Admin';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-400/40';
+        adminPanel.classList.remove('hidden');
+        showToast('🛡️ Switched to Admin mode');
+      } else {
+        badge.textContent = '● Guest';
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-slate-800 text-slate-300 border border-slate-700';
+        adminPanel.classList.add('hidden');
+        showToast('● Switched to Guest mode');
+      }
+    }
+
+    function updateSiteName() {
+      const inp = document.getElementById('site-name-editor');
+      const title = document.getElementById('site-brand-title');
+      if (inp && title && inp.value.trim()) {
+        title.textContent = inp.value.trim().toUpperCase();
+        showToast(`❄️ Portal renamed to ${title.textContent}`);
+      }
+    }
+
+    // =========================================================================
+    // MODULES & GAMES CATEGORY NAVIGATION
+    // =========================================================================
+    function toggleDeviceDockModal() {
+      const modal = document.getElementById('device-dock-modal');
+      if (modal) modal.classList.toggle('hidden');
+    }
+
+    function toggleSchoolHelpModal() {
+      const modal = document.getElementById('school-help-modal');
+      if (modal) modal.classList.toggle('hidden');
+    }
+
+    function launchSchoolTopic(sampleQuery) {
+      const modal = document.getElementById('school-help-modal');
+      if (modal) modal.classList.add('hidden');
+      const input = document.getElementById('universal-search-input');
+      if (input) {
+        input.value = sampleQuery;
+        handleLiveFilter(sampleQuery);
+      }
+      runCryoSearch(sampleQuery);
+    }
+
+    function openGamesBox() {
+      document.getElementById('device-dock-modal').classList.add('hidden');
+      showGamesCategories();
+      document.getElementById('games-list-modal').classList.remove('hidden');
+    }
+
+    function closeGamesListModal() {
+      document.getElementById('games-list-modal').classList.add('hidden');
+    }
+
+    function showGamesCategories() {
+      document.getElementById('games-modal-title').textContent = 'Games Hub';
+      document.getElementById('games-modal-subtitle').textContent = 'Choose a category';
+      document.getElementById('games-category-boxes').classList.remove('hidden');
+      document.getElementById('games-standard-list').classList.add('hidden');
+      document.getElementById('games-ai-list').classList.add('hidden');
+      document.getElementById('games-back-to-cats-btn').classList.add('hidden');
+    }
+
+    function openGameCategory(cat) {
+      document.getElementById('games-category-boxes').classList.add('hidden');
+      document.getElementById('games-back-to-cats-btn').classList.remove('hidden');
+      if (cat === 'ai') {
+        document.getElementById('games-modal-title').textContent = 'AI Games';
+        document.getElementById('games-modal-subtitle').textContent = 'Original Cryo AI-powered games';
+        document.getElementById('games-ai-list').classList.remove('hidden');
+        document.getElementById('games-standard-list').classList.add('hidden');
+      } else {
+        document.getElementById('games-modal-title').textContent = 'Games';
+        document.getElementById('games-modal-subtitle').textContent = 'Classic multiplayer & bot games';
+        document.getElementById('games-standard-list').classList.remove('hidden');
+        document.getElementById('games-ai-list').classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // AI GAMES ARCADE (CRYO NEURAL PONG & CRYO ASTEROID SURGE)
+    // =========================================================================
+    let aiArenaState = { active: false, game: 'cyber-pong', raf: null, playerY: 160, aiY: 160, ballX: 320, ballY: 180, vx: 4.5, vy: 3.2, scoreL: 0, scoreR: 0, shipX: 320, bullets: [], meteors: [], keys: {} };
+
+    function launchCryoAiArena(gameId) {
+      closeGamesListModal();
+      aiArenaState.game = gameId;
+      aiArenaState.active = true;
+      document.getElementById('cryo-ai-game-modal').classList.remove('hidden');
+      if (gameId === 'cyber-pong') {
+        document.getElementById('ai-game-icon').textContent = '⚡';
+        document.getElementById('ai-game-title').textContent = 'Cryo Neural Pong';
+        document.getElementById('ai-game-subtitle').textContent = 'Move mouse or Up/Down arrows to beat the adaptive Cryo AI';
+      } else {
+        document.getElementById('ai-game-icon').textContent = '🚀';
+        document.getElementById('ai-game-title').textContent = 'Cryo Asteroid Surge';
+        document.getElementById('ai-game-subtitle').textContent = 'Move mouse or Left/Right arrows • Click or Space to fire';
+      }
+      restartCryoAiGame();
+    }
+
+    function closeCryoAiGame() {
+      aiArenaState.active = false;
+      cancelAnimationFrame(aiArenaState.raf);
+      document.getElementById('cryo-ai-game-modal').classList.add('hidden');
+    }
+
+    function restartCryoAiGame() {
+      const canvas = document.getElementById('cryo-ai-canvas');
+      canvas.width = canvas.clientWidth || 640;
+      canvas.height = canvas.clientHeight || 360;
+      aiArenaState.playerY = canvas.height / 2 - 40;
+      aiArenaState.aiY = canvas.height / 2 - 40;
+      aiArenaState.ballX = canvas.width / 2;
+      aiArenaState.ballY = canvas.height / 2;
+      aiArenaState.vx = (Math.random() < 0.5 ? 1 : -1) * 4.6;
+      aiArenaState.vy = (Math.random() * 4 - 2) || 2.5;
+      aiArenaState.scoreL = 0;
+      aiArenaState.scoreR = 0;
+      aiArenaState.shipX = canvas.width / 2;
+      aiArenaState.bullets = [];
+      aiArenaState.meteors = [];
+      cancelAnimationFrame(aiArenaState.raf);
+      loopCryoAiGame();
+    }
+
+    function loopCryoAiGame() {
+      if (!aiArenaState.active) return;
+      const canvas = document.getElementById('cryo-ai-canvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#050814';
+      ctx.fillRect(0, 0, W, H);
+
+      if (aiArenaState.game === 'cyber-pong') {
+        if (aiArenaState.keys['ArrowUp']) aiArenaState.playerY = Math.max(0, aiArenaState.playerY - 7);
+        if (aiArenaState.keys['ArrowDown']) aiArenaState.playerY = Math.min(H - 80, aiArenaState.playerY + 7);
+        const aiTarget = aiArenaState.ballY - 40;
+        aiArenaState.aiY += Math.sign(aiTarget - aiArenaState.aiY) * Math.min(4.4, Math.abs(aiTarget - aiArenaState.aiY));
+        aiArenaState.aiY = Math.max(0, Math.min(H - 80, aiArenaState.aiY));
+
+        aiArenaState.ballX += aiArenaState.vx;
+        aiArenaState.ballY += aiArenaState.vy;
+        if (aiArenaState.ballY <= 8 || aiArenaState.ballY >= H - 8) aiArenaState.vy *= -1;
+
+        if (aiArenaState.ballX <= 26 && aiArenaState.ballY >= aiArenaState.playerY && aiArenaState.ballY <= aiArenaState.playerY + 80) {
+          aiArenaState.vx = Math.abs(aiArenaState.vx) * 1.04;
+          aiArenaState.vy += (aiArenaState.ballY - (aiArenaState.playerY + 40)) * 0.08;
+        }
+        if (aiArenaState.ballX >= W - 26 && aiArenaState.ballY >= aiArenaState.aiY && aiArenaState.ballY <= aiArenaState.aiY + 80) {
+          aiArenaState.vx = -Math.abs(aiArenaState.vx) * 1.04;
+        }
+        if (aiArenaState.ballX < 0) { aiArenaState.scoreR++; aiArenaState.ballX = W / 2; aiArenaState.ballY = H / 2; aiArenaState.vx = 4.6; }
+        if (aiArenaState.ballX > W) { aiArenaState.scoreL++; aiArenaState.ballX = W / 2; aiArenaState.ballY = H / 2; aiArenaState.vx = -4.6; }
+
+        document.getElementById('ai-game-score-left').textContent = `You: ${aiArenaState.scoreL}`;
+        document.getElementById('ai-game-score-right').textContent = `Cryo AI: ${aiArenaState.scoreR}`;
+        document.getElementById('ai-game-status').textContent = aiArenaState.scoreL >= 7 ? '🏆 You Beat Cryo AI!' : (aiArenaState.scoreR >= 7 ? '🤖 Cryo AI Wins!' : 'First to 7 wins!');
+
+        ctx.strokeStyle = 'rgba(56,189,248,0.2)';
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#38bdf8'; ctx.fillRect(14, aiArenaState.playerY, 10, 80);
+        ctx.fillStyle = '#818cf8'; ctx.fillRect(W - 24, aiArenaState.aiY, 10, 80);
+        ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(aiArenaState.ballX, aiArenaState.ballY, 8, 0, Math.PI * 2); ctx.fill();
+      } else {
+        if (aiArenaState.keys['ArrowLeft']) aiArenaState.shipX = Math.max(20, aiArenaState.shipX - 7);
+        if (aiArenaState.keys['ArrowRight']) aiArenaState.shipX = Math.min(W - 20, aiArenaState.shipX + 7);
+        if (Math.random() < 0.04) aiArenaState.meteors.push({ x: 24 + Math.random() * (W - 48), y: -15, r: 14 + Math.random() * 12, vy: 2.5 + Math.random() * 2.5 });
+
+        aiArenaState.bullets.forEach(b => b.y -= 9);
+        aiArenaState.bullets = aiArenaState.bullets.filter(b => b.y > -10);
+        aiArenaState.meteors.forEach(m => m.y += m.vy);
+
+        aiArenaState.meteors.forEach(m => {
+          aiArenaState.bullets.forEach(b => {
+            if (Math.hypot(m.x - b.x, m.y - b.y) < m.r + 6) {
+              m.hit = true; b.hit = true; aiArenaState.scoreL += 10;
+            }
+          });
+          if (m.y > H) { m.hit = true; aiArenaState.scoreR++; }
+        });
+        aiArenaState.meteors = aiArenaState.meteors.filter(m => !m.hit);
+        aiArenaState.bullets = aiArenaState.bullets.filter(b => !b.hit);
+
+        document.getElementById('ai-game-score-left').textContent = `Score: ${aiArenaState.scoreL}`;
+        document.getElementById('ai-game-score-right').textContent = `Missed: ${aiArenaState.scoreR}`;
+        document.getElementById('ai-game-status').textContent = 'Blast incoming AI meteors!';
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath(); ctx.moveTo(aiArenaState.shipX, H - 36); ctx.lineTo(aiArenaState.shipX - 16, H - 12); ctx.lineTo(aiArenaState.shipX + 16, H - 12); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#facc15';
+        aiArenaState.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y, 4, 12));
+        ctx.fillStyle = '#f43f5e';
+        aiArenaState.meteors.forEach(m => { ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.fill(); });
+      }
+      aiArenaState.raf = requestAnimationFrame(loopCryoAiGame);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const aiCanvas = document.getElementById('cryo-ai-canvas');
+      if (aiCanvas) {
+        aiCanvas.addEventListener('mousemove', (e) => {
+          const rect = aiCanvas.getBoundingClientRect();
+          aiArenaState.playerY = Math.max(0, Math.min(aiCanvas.height - 80, e.clientY - rect.top - 40));
+          aiArenaState.shipX = Math.max(20, Math.min(aiCanvas.width - 20, e.clientX - rect.left));
+        });
+        aiCanvas.addEventListener('click', () => {
+          if (aiArenaState.active && aiArenaState.game === 'quantum-dodge') {
+            aiArenaState.bullets.push({ x: aiArenaState.shipX, y: aiCanvas.height - 40 });
+          }
+        });
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      aiArenaState.keys[e.key] = true;
+      if (e.key === ' ' && aiArenaState.active && aiArenaState.game === 'quantum-dodge') {
+        e.preventDefault();
+        const c = document.getElementById('cryo-ai-canvas');
+        aiArenaState.bullets.push({ x: aiArenaState.shipX, y: (c ? c.height : 360) - 40 });
+      }
+    });
+    window.addEventListener('keyup', (e) => { aiArenaState.keys[e.key] = false; });
+
+    // =========================================================================
+    // INTERACTIVE CRYO CHESS ENGINE (BOT, LOCAL FRIEND, & ONLINE ROOMS)
+    // =========================================================================
+    const CC_GLYPHS = { wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙', bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟' };
+    const CC_VALS = { P:100, N:320, B:330, R:500, Q:900, K:20000 };
+    const ccChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('cryo_chess_sync_v1') : null;
+    let ccState = {
+      board: [], turn: 'w', mode: 'bot', playerSide: 'w', flipped: false,
+      selected: null, legal: [], history: [], snapshots: [], lastMove: null,
+      gameOver: false, roomCode: null, onlineSide: 'w'
+    };
+
+    function launchCryoChess() {
+      closeGamesListModal();
+      document.getElementById('cryo-chess-modal').classList.remove('hidden');
+      if (ccState.board.length === 0) ccStartNewGame();
+      else ccRender();
+    }
+
+    function closeCryoChess() {
+      document.getElementById('cryo-chess-modal').classList.add('hidden');
+    }
+
+    function ccSetMode(mode) {
+      ccState.mode = mode;
+      ['bot', 'friend', 'online'].forEach(m => {
+        const btn = document.getElementById('cc-mode-' + m);
+        if (btn) btn.className = m === mode
+          ? 'py-2 px-2 rounded-xl bg-emerald-500 text-slate-950 transition'
+          : 'py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition';
+      });
+      document.getElementById('cc-bot-options').classList.toggle('hidden', mode !== 'bot');
+      document.getElementById('cc-online-options').classList.toggle('hidden', mode !== 'online');
+      document.getElementById('cc-mode-badge').textContent = mode === 'bot' ? 'vs Bot' : (mode === 'friend' ? '2P Friend' : 'Online');
+      ccStartNewGame();
+    }
+
+    function ccChooseSide(side) {
+      ccState.playerSide = side;
+      ccState.flipped = side === 'b';
+      document.getElementById('cc-side-w').className = side === 'w'
+        ? 'px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold'
+        : 'px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-slate-300 font-bold';
+      document.getElementById('cc-side-b').className = side === 'b'
+        ? 'px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold'
+        : 'px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-slate-300 font-bold';
+      ccStartNewGame();
+    }
+
+    function ccFlipBoard() {
+      ccState.flipped = !ccState.flipped;
+      ccRender();
+    }
+
+    function ccStartNewGame(broadcast = true) {
+      ccState.board = [
+        ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+        ['bP','bP','bP','bP','bP','bP','bP','bP'],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        [null,null,null,null,null,null,null,null],
+        ['wP','wP','wP','wP','wP','wP','wP','wP'],
+        ['wR','wN','wB','wQ','wK','wB','wN','wR']
+      ];
+      ccState.turn = 'w';
+      ccState.selected = null;
+      ccState.legal = [];
+      ccState.history = [];
+      ccState.snapshots = [ccState.board.map(r => [...r])];
+      ccState.lastMove = null;
+      ccState.gameOver = false;
+      document.getElementById('cc-gameover-overlay').classList.add('hidden');
+      ccRender();
+      if (ccState.mode === 'online' && ccState.roomCode && broadcast) {
+        ccBroadcast({ type: 'reset', roomCode: ccState.roomCode });
+      }
+      if (ccState.mode === 'bot' && ccState.playerSide === 'b') {
+        setTimeout(ccBotMove, 320);
+      }
+    }
+
+    function ccInBounds(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+
+    function ccPseudoMoves(board, r, c) {
+      const p = board[r][c];
+      if (!p) return [];
+      const col = p[0], type = p[1], opp = col === 'w' ? 'b' : 'w';
+      const out = [];
+      if (type === 'P') {
+        const d = col === 'w' ? -1 : 1, start = col === 'w' ? 6 : 1;
+        if (ccInBounds(r + d, c) && !board[r + d][c]) {
+          out.push({ from: [r, c], to: [r + d, c] });
+          if (r === start && !board[r + 2 * d][c]) out.push({ from: [r, c], to: [r + 2 * d, c] });
+        }
+        for (const dc of [-1, 1]) {
+          if (ccInBounds(r + d, c + dc) && board[r + d][c + dc] && board[r + d][c + dc][0] === opp) {
+            out.push({ from: [r, c], to: [r + d, c + dc] });
+          }
+        }
+      } else if (type === 'N') {
+        [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr, dc]) => {
+          const nr = r + dr, nc = c + dc;
+          if (ccInBounds(nr, nc) && (!board[nr][nc] || board[nr][nc][0] === opp)) out.push({ from: [r, c], to: [nr, nc] });
+        });
+      } else if (type === 'K') {
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          if (!dr && !dc) continue;
+          const nr = r + dr, nc = c + dc;
+          if (ccInBounds(nr, nc) && (!board[nr][nc] || board[nr][nc][0] === opp)) out.push({ from: [r, c], to: [nr, nc] });
+        }
+      } else {
+        const dirs = [];
+        if (type === 'R' || type === 'Q') dirs.push([-1,0],[1,0],[0,-1],[0,1]);
+        if (type === 'B' || type === 'Q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+        dirs.forEach(([dr, dc]) => {
+          let nr = r + dr, nc = c + dc;
+          while (ccInBounds(nr, nc)) {
+            if (!board[nr][nc]) out.push({ from: [r, c], to: [nr, nc] });
+            else { if (board[nr][nc][0] === opp) out.push({ from: [r, c], to: [nr, nc] }); break; }
+            nr += dr; nc += dc;
+          }
+        });
+      }
+      return out;
+    }
+
+    function ccApply(board, m) {
+      const b = board.map(r => [...r]);
+      const piece = b[m.from[0]][m.from[1]];
+      b[m.from[0]][m.from[1]] = null;
+      if (piece[1] === 'P' && (m.to[0] === 0 || m.to[0] === 7)) b[m.to[0]][m.to[1]] = piece[0] + 'Q';
+      else b[m.to[0]][m.to[1]] = piece;
+      return b;
+    }
+
+    function ccIsCheck(board, col) {
+      let kr = -1, kc = -1;
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (board[r][c] === col + 'K') { kr = r; kc = c; }
+      if (kr === -1) return true;
+      const opp = col === 'w' ? 'b' : 'w';
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+        if (board[r][c] && board[r][c][0] === opp) {
+          if (ccPseudoMoves(board, r, c).some(m => m.to[0] === kr && m.to[1] === kc)) return true;
+        }
+      }
+      return false;
+    }
+
+    function ccGetLegalMoves(board, col) {
+      const legal = [];
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+        if (board[r][c] && board[r][c][0] === col) {
+          ccPseudoMoves(board, r, c).forEach(m => {
+            if (!ccIsCheck(ccApply(board, m), col)) legal.push(m);
+          });
+        }
+      }
+      return legal;
+    }
+
+    function ccExecuteMove(m, remote = false) {
+      if (ccState.gameOver) return;
+      const piece = ccState.board[m.from[0]][m.from[1]];
+      const cap = ccState.board[m.to[0]][m.to[1]];
+      ccState.board = ccApply(ccState.board, m);
+      ccState.lastMove = m;
+      ccState.selected = null;
+      ccState.legal = [];
+      const notation = `${piece[1] === 'P' ? '' : piece[1]}${cap ? 'x' : ''}${String.fromCharCode(97 + m.to[1])}${8 - m.to[0]}`;
+      ccState.history.push(notation);
+      ccState.snapshots.push(ccState.board.map(r => [...r]));
+      ccState.turn = ccState.turn === 'w' ? 'b' : 'w';
+
+      if (ccState.mode === 'online' && ccState.roomCode && !remote) {
+        ccBroadcast({ type: 'move', roomCode: ccState.roomCode, move: m });
+      }
+
+      const nextLegal = ccGetLegalMoves(ccState.board, ccState.turn);
+      if (nextLegal.length === 0) {
+        ccState.gameOver = true;
+        const winner = ccState.turn === 'w' ? 'Black' : 'White';
+        const inChk = ccIsCheck(ccState.board, ccState.turn);
+        document.getElementById('cc-gameover-title').textContent = inChk ? 'Checkmate!' : 'Stalemate!';
+        document.getElementById('cc-gameover-sub').textContent = inChk ? `${winner} wins the match` : 'Match drawn';
+        document.getElementById('cc-gameover-overlay').classList.remove('hidden');
+      }
+
+      ccRender();
+      if (!ccState.gameOver && ccState.mode === 'bot' && ccState.turn !== ccState.playerSide) {
+        setTimeout(ccBotMove, 260);
+      }
+    }
+
+    function ccBotMove() {
+      const moves = ccGetLegalMoves(ccState.board, ccState.turn);
+      if (!moves.length) return;
+      const lvl = parseInt(document.getElementById('cc-bot-level').value, 10) || 2;
+      if (lvl === 1 && Math.random() < 0.65) {
+        ccExecuteMove(moves[Math.floor(Math.random() * moves.length)]);
+        return;
+      }
+      const isMax = ccState.turn === 'w';
+      let best = moves[0], bestScore = isMax ? -1e9 : 1e9;
+      moves.sort(() => Math.random() - 0.5).forEach(m => {
+        const b = ccApply(ccState.board, m);
+        let score = 0;
+        for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+          const p = b[r][c];
+          if (p) score += (p[0] === 'w' ? 1 : -1) * (CC_VALS[p[1]] + (3.5 - Math.abs(3.5 - c)) * 4);
+        }
+        if (isMax ? score > bestScore : score < bestScore) { bestScore = score; best = m; }
+      });
+      ccExecuteMove(best);
+    }
+
+    function ccUndoMove() {
+      if (ccState.snapshots.length <= 1 || ccState.mode === 'online') return;
+      const steps = ccState.mode === 'bot' && ccState.snapshots.length > 2 ? 2 : 1;
+      ccState.snapshots = ccState.snapshots.slice(0, ccState.snapshots.length - steps);
+      ccState.history = ccState.history.slice(0, ccState.history.length - steps);
+      ccState.board = ccState.snapshots[ccState.snapshots.length - 1].map(r => [...r]);
+      ccState.turn = ccState.history.length % 2 === 0 ? 'w' : 'b';
+      ccState.selected = null;
+      ccState.legal = [];
+      ccState.gameOver = false;
+      document.getElementById('cc-gameover-overlay').classList.add('hidden');
+      ccRender();
+    }
+
+    function ccCreateOnlineRoom() {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      ccState.roomCode = code;
+      ccState.onlineSide = 'w';
+      ccState.flipped = false;
+      const disp = document.getElementById('cc-room-display');
+      disp.textContent = code;
+      disp.classList.remove('hidden');
+      ccStartNewGame(false);
+      showToast(`🌐 Room ${code} created!`);
+    }
+
+    function ccJoinOnlineRoom() {
+      const code = (document.getElementById('cc-join-code').value || '').trim().toUpperCase();
+      if (code.length < 4) return showToast('Enter a valid room code');
+      ccState.roomCode = code;
+      ccState.onlineSide = 'b';
+      ccState.flipped = true;
+      ccStartNewGame(false);
+      showToast(`✅ Joined Room ${code} as Black!`);
+    }
+
+    function ccBroadcast(msg) {
+      if (ccChannel) ccChannel.postMessage(msg);
+      localStorage.setItem('cryo_chess_last_msg', JSON.stringify({ ...msg, _ts: Date.now() }));
+    }
+
+    if (ccChannel) {
+      ccChannel.onmessage = (e) => {
+        const d = e.data;
+        if (!d || d.roomCode !== ccState.roomCode) return;
+        if (d.type === 'move') ccExecuteMove(d.move, true);
+        if (d.type === 'reset') ccStartNewGame(false);
+      };
+    }
+
+    function ccRender() {
+      const boardEl = document.getElementById('cc-board');
+      if (!boardEl) return;
+      boardEl.innerHTML = '';
+      document.getElementById('cc-status-text').textContent = ccState.gameOver
+        ? 'Game Over'
+        : `${ccState.turn === 'w' ? 'White' : 'Black'} to move`;
+      document.getElementById('cc-move-count').textContent = `${ccState.history.length} moves`;
+      document.getElementById('cc-move-list').innerHTML = ccState.history.length
+        ? ccState.history.map((m, i) => i % 2 === 0 ? `<span class="text-slate-500">${i/2 + 1}.</span> <span class="text-white font-bold">${m}</span> ` : `<span class="text-cyan-300 font-bold mr-2">${m}</span>`).join('')
+        : '<div class="text-slate-500 italic">Click a piece on the board to start...</div>';
+
+      for (let i = 0; i < 64; i++) {
+        const vr = Math.floor(i / 8), vc = i % 8;
+        const r = ccState.flipped ? 7 - vr : vr;
+        const c = ccState.flipped ? 7 - vc : vc;
+        const isLight = (r + c) % 2 === 0;
+        const isSel = ccState.selected && ccState.selected[0] === r && ccState.selected[1] === c;
+        const isTarget = ccState.legal.some(m => m.to[0] === r && m.to[1] === c);
+        const isLast = ccState.lastMove && ((ccState.lastMove.from[0] === r && ccState.lastMove.from[1] === c) || (ccState.lastMove.to[0] === r && ccState.lastMove.to[1] === c));
+
+        const sq = document.createElement('button');
+        sq.type = 'button';
+        sq.className = `relative flex items-center justify-center text-3xl sm:text-4xl font-bold transition ${
+          isSel ? 'bg-amber-300 text-slate-950' :
+          isLast ? (isLight ? 'bg-lime-200' : 'bg-lime-600') :
+          (isLight ? 'bg-[#ebecd0]' : 'bg-[#739552]')
+        }`;
+        const p = ccState.board[r][c];
+        if (p) {
+          sq.innerHTML = `<span class="${p[0] === 'w' ? 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.85)]' : 'text-slate-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]'}">${CC_GLYPHS[p]}</span>`;
+        }
+        if (isTarget) {
+          sq.innerHTML += `<span class="absolute w-3.5 h-3.5 rounded-full bg-slate-950/35 pointer-events-none"></span>`;
+        }
+        sq.onclick = () => {
+          if (ccState.gameOver) return;
+          if (ccState.mode === 'bot' && ccState.turn !== ccState.playerSide) return;
+          if (ccState.mode === 'online' && ccState.turn !== ccState.onlineSide) return;
+          const chosen = ccState.legal.find(m => m.to[0] === r && m.to[1] === c);
+          if (chosen) { ccExecuteMove(chosen); return; }
+          if (p && p[0] === ccState.turn) {
+            ccState.selected = [r, c];
+            ccState.legal = ccGetLegalMoves(ccState.board, ccState.turn).filter(m => m.from[0] === r && m.from[1] === c);
+          } else {
+            ccState.selected = null;
+            ccState.legal = [];
+          }
+          ccRender();
+        };
+        boardEl.appendChild(sq);
+      }
+    }
+
+    // =========================================================================
+    // CRYO SEARCH ENGINE (MASSIVE UNIVERSAL KNOWLEDGE & INSTANT SOLVER ENGINE)
+    // =========================================================================
+    const CRYO_KNOWLEDGE_BANK = {
+      'photosynthesis': {
+        summary: 'Photosynthesis is the process used by plants, algae, and certain bacteria to convert light energy into chemical energy (glucose) using carbon dioxide and water, releasing oxygen as a byproduct.',
+        facts: ['Equation: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂', 'Takes place inside chloroplasts containing chlorophyll', 'Produces oxygen essential for aerobic life'],
+        deepDive: 'Photosynthesis occurs in two main stages: light-dependent reactions in the thylakoid membranes (which split water and generate ATP/NADPH) and the Calvin cycle in the stroma (which fixes carbon dioxide into glucose).'
+      },
+      'cellular respiration': {
+        summary: 'Cellular respiration is the metabolic process by which cells break down glucose and oxygen to produce usable chemical energy in the form of ATP, releasing carbon dioxide and water.',
+        facts: ['Equation: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP', 'Occurs primarily in the mitochondria ("powerhouse of the cell")', 'Three stages: Glycolysis, Krebs Cycle, and Electron Transport Chain'],
+        deepDive: 'Aerobic cellular respiration yields roughly 36–38 ATP molecules per glucose molecule, whereas anaerobic fermentation yields 2 ATP.'
+      },
+      'mitosis': {
+        summary: 'Mitosis is a type of cell division in which one parent cell divides to produce two genetically identical diploid daughter cells for growth and tissue repair.',
+        facts: ['Phases (PMAT): Prophase, Metaphase, Anaphase, Telophase', 'Followed by cytokinesis to split the cytoplasm', 'Maintains the exact same chromosome number (46 in humans)'],
+        deepDive: 'Before mitosis begins, DNA replicates during Interphase (S phase). Sister chromatids then separate evenly so both daughter cells receive complete genomes.'
+      },
+      'meiosis': {
+        summary: 'Meiosis is a specialized two-stage cell division that produces four genetically unique haploid gametes (sperm or egg cells) with half the parent chromosome count.',
+        facts: ['Includes two divisions: Meiosis I and Meiosis II', 'Crossing over in Prophase I creates genetic diversity', 'Reduces human cells from 46 diploid to 23 haploid chromosomes'],
+        deepDive: 'Independent assortment and homologous recombination during Meiosis I ensure every gamete carries a distinct combination of alleles.'
+      },
+      'dna': {
+        summary: 'DNA (Deoxyribonucleic Acid) is the double-helix molecule that carries the genetic instructions for the development, functioning, growth, and reproduction of all known organisms.',
+        facts: ['Four nitrogenous bases: Adenine (A), Thymine (T), Cytosine (C), Guanine (G)', 'Base-pairing rules: A pairs with T, and C pairs with G', 'Discovered in double-helix form by Watson, Crick, Franklin, and Wilkins (1953)'],
+        deepDive: 'DNA is transcribed into messenger RNA (mRNA) in the nucleus, which is then translated by ribosomes into proteins.'
+      },
+      'atom': {
+        summary: 'An atom is the basic building block of matter, consisting of a dense central nucleus of protons and neutrons surrounded by a cloud of negatively charged electrons.',
+        facts: ['Protons (+) and Neutrons (0) form the nucleus', 'Electrons (-) orbit in energy shells', 'Atomic number equals the number of protons'],
+        deepDive: 'Atoms bond together by sharing electrons (covalent bonds) or transferring electrons (ionic bonds) to form molecules and compounds.'
+      },
+      'periodic table': {
+        summary: 'The Periodic Table organizes all 118 known chemical elements by increasing atomic number, electron configuration, and recurring chemical properties.',
+        facts: ['Rows are called Periods (1–7); columns are called Groups (1–18)', 'Created by Russian chemist Dmitri Mendeleev in 1869', 'Divided into metals, nonmetals, and metalloids'],
+        deepDive: 'Elements in the same vertical group share the same number of valence electrons, giving them remarkably similar chemical reactivity.'
+      },
+      'newton laws': {
+        summary: 'Isaac Newton’s Three Laws of Motion describe the relationship between a physical object and the forces acting upon it, forming the foundation of classical mechanics.',
+        facts: ['1st Law (Inertia): Objects stay at rest or in uniform motion unless acted on by a net force', '2nd Law (F = ma): Force equals mass times acceleration', '3rd Law (Action-Reaction): Every action has an equal and opposite reaction'],
+        deepDive: 'Published in Principia Mathematica (1687), Newton’s laws accurately govern everyday mechanics, engineering, and planetary trajectories.'
+      },
+      'gravity': {
+        summary: 'Gravity is the universal force of attraction between all objects with mass or energy, keeping planets in orbit around stars and anchoring objects to Earth.',
+        facts: ['Earth surface gravitational acceleration: g ≈ 9.81 m/s²', 'Described by Newton’s Law of Universal Gravitation and Einstein’s General Relativity', 'Stronger for more massive objects and closer distances'],
+        deepDive: 'Einstein’s General Relativity explains gravity as the curvature of four-dimensional spacetime caused by mass and energy.'
+      },
+      'solar system': {
+        summary: 'Our Solar System consists of the Sun and all celestial objects gravitationally bound to it, including 8 major planets, dwarf planets, moons, asteroids, and comets.',
+        facts: ['Order from Sun: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune', 'Inner 4 are rocky terrestrial planets; outer 4 are gas/ice giants', 'Formed ~4.6 billion years ago from a collapsing molecular cloud'],
+        deepDive: 'The Sun contains over 99.8% of the Solar System’s total mass, driving planetary orbits and space weather.'
+      },
+      'black hole': {
+        summary: 'A black hole is a region of spacetime where gravity is so intense that nothing—not even light or electromagnetic radiation—can escape once it crosses the event horizon.',
+        facts: ['Formed when massive stars collapse at the end of their life cycle', 'Boundary of no return is called the Event Horizon', 'Supermassive black holes sit at the centers of most galaxies'],
+        deepDive: 'At the center lies a gravitational singularity, while nearby infalling matter heats up into a luminous accretion disk.'
+      },
+      'algebra': {
+        summary: 'Algebra is a branch of mathematics that uses symbols and letters (variables) to represent unknown numbers and quantities in formulas and equations.',
+        facts: ['Systematized by Persian mathematician Al-Khwarizmi', 'Core rule: perform the same operation on both sides', 'Foundation for calculus, physics, and computer science'],
+        deepDive: 'Linear equations take the form ax + b = c, while quadratic equations take ax² + bx + c = 0 and can be solved via factoring, completing the square, or the quadratic formula.'
+      },
+      'pythagorean theorem': {
+        summary: 'The Pythagorean Theorem states that in any right-angled triangle, the square of the hypotenuse (c) equals the sum of the squares of the other two legs (a and b).',
+        facts: ['Formula: a² + b² = c²', 'Applies exclusively to right triangles (90° angle)', 'Famous triples: (3, 4, 5), (5, 12, 13), (8, 15, 17)'],
+        deepDive: 'Used across geometry, trigonometry, architecture, navigation, and 2D/3D distance calculations.'
+      },
+      'pemdas': {
+        summary: 'PEMDAS is the standard mathematical order of operations used to evaluate expressions consistently: Parentheses, Exponents, Multiplication & Division, Addition & Subtraction.',
+        facts: ['P: Parentheses/Brackets first', 'E: Exponents & Roots second', 'MD & AS: Evaluated strictly left-to-right'],
+        deepDive: 'Without PEMDAS, expressions like 2 + 3 × 4 could be misread as 20 instead of the true value 14.'
+      },
+      'metaphor': {
+        summary: 'A metaphor is a figure of speech that directly compares two unrelated things by stating one thing IS another, without using "like" or "as".',
+        facts: ['Example: "Time is a thief" or "The classroom was a zoo"', 'Creates vivid imagery and deeper symbolic meaning', 'Distinct from a simile, which uses "like" or "as"'],
+        deepDive: 'Extended metaphors sustain a comparison across multiple sentences or an entire poem/story.'
+      },
+      'simile': {
+        summary: 'A simile is a figure of speech that compares two different things using the connecting words "like" or "as".',
+        facts: ['Example: "Brave as a lion" or "Fast like lightning"', 'Highlights a shared quality between two distinct images', 'Widely used in poetry, narratives, and persuasive writing'],
+        deepDive: 'Similes make abstract ideas concrete and immediately relatable for readers.'
+      },
+      'thesis statement': {
+        summary: 'A thesis statement is a clear, concise one- or two-sentence summary of the central claim or main argument of an essay or research paper.',
+        facts: ['Usually appears at the end of the introduction paragraph', 'Must be arguable, specific, and supported by evidence', 'Guides the structure of every body paragraph'],
+        deepDive: 'A strong analytical thesis states both your position ("what") and your reasoning ("why/how").'
+      },
+      'world war 2': {
+        summary: 'World War II (1939–1945) was a global conflict fought between the Allies and the Axis powers, becoming the deadliest and most widespread war in human history.',
+        facts: ['Began Sept 1, 1939 with Germany’s invasion of Poland', 'Major Allies: USA, UK, Soviet Union, China; Axis: Germany, Italy, Japan', 'Ended in 1945 following V-E Day (May) and V-J Day (September)'],
+        deepDive: 'WWII reshaped global geopolitics, leading to the creation of the United Nations and the onset of the Cold War.'
+      },
+      'american revolution': {
+        summary: 'The American Revolution (1775–1783) was the political and military struggle in which thirteen British colonies in North America won independence to form the United States.',
+        facts: ['Declaration of Independence adopted on July 4, 1776', 'Key battles: Lexington & Concord, Saratoga, Yorktown', 'Ended with the Treaty of Paris in 1783'],
+        deepDive: 'Fueled by Enlightenment ideals and opposition to taxation without representation, the revolution established a constitutional republic.'
+      },
+      'artificial intelligence': {
+        summary: 'Artificial Intelligence (AI) is the field of computer science dedicated to building systems capable of performing tasks that typically require human intelligence, such as reasoning, learning, perception, and language understanding.',
+        facts: ['Includes Machine Learning, Neural Networks, and Natural Language Processing', 'Trained on large datasets to recognize patterns and make predictions', 'Powers search engines, robotics, medical diagnostics, and assistants'],
+        deepDive: 'Modern generative AI uses transformer architectures to understand context and synthesize text, code, and visual media.'
+      },
+      'python': {
+        summary: 'Python is a high-level, interpreted programming language known for its clean, readable syntax and vast ecosystem for web development, data science, automation, and AI.',
+        facts: ['Created by Guido van Rossum and released in 1991', 'Uses indentation to define code blocks', 'Top language for machine learning, scripting, and backend APIs'],
+        deepDive: 'Python’s rich standard library and packages like NumPy, Pandas, and PyTorch make it a favorite for beginners and engineers alike.'
+      },
+      'javascript': {
+        summary: 'JavaScript is the core programming language of the web, enabling interactive user interfaces, animations, real-time apps, and server-side logic via Node.js.',
+        facts: ['Runs natively inside every modern web browser', 'Works alongside HTML (structure) and CSS (styling)', 'Supports event-driven, functional, and object-oriented programming'],
+        deepDive: 'With modern ES6+ features and frameworks, JavaScript powers full-stack web applications and browser games.'
+      }
+    };
+
+    const US_STATES_CAPITALS = {
+      'alabama': 'Montgomery', 'alaska': 'Juneau', 'arizona': 'Phoenix', 'arkansas': 'Little Rock',
+      'california': 'Sacramento', 'colorado': 'Denver', 'connecticut': 'Hartford', 'delaware': 'Dover',
+      'florida': 'Tallahassee', 'georgia': 'Atlanta', 'hawaii': 'Honolulu', 'idaho': 'Boise',
+      'illinois': 'Springfield', 'indiana': 'Indianapolis', 'iowa': 'Des Moines', 'kansas': 'Topeka',
+      'kentucky': 'Frankfort', 'louisiana': 'Baton Rouge', 'maine': 'Augusta', 'maryland': 'Annapolis',
+      'massachusetts': 'Boston', 'michigan': 'Lansing', 'minnesota': 'St. Paul', 'mississippi': 'Jackson',
+      'missouri': 'Jefferson City', 'montana': 'Helena', 'nebraska': 'Lincoln', 'nevada': 'Carson City',
+      'new hampshire': 'Concord', 'new jersey': 'Trenton', 'new mexico': 'Santa Fe', 'new york': 'Albany',
+      'north carolina': 'Raleigh', 'north dakota': 'Bismarck', 'ohio': 'Columbus', 'oklahoma': 'Oklahoma City',
+      'oregon': 'Salem', 'pennsylvania': 'Harrisburg', 'rhode island': 'Providence', 'south carolina': 'Columbia',
+      'south dakota': 'Pierre', 'tennessee': 'Nashville', 'texas': 'Austin', 'utah': 'Salt Lake City',
+      'vermont': 'Montpelier', 'virginia': 'Richmond', 'washington': 'Olympia', 'west virginia': 'Charleston',
+      'wisconsin': 'Madison', 'wyoming': 'Cheyenne'
+    };
+
+    const WORLD_CAPITALS = {
+      'united states': 'Washington, D.C.', 'usa': 'Washington, D.C.', 'canada': 'Ottawa', 'mexico': 'Mexico City',
+      'brazil': 'Brasília', 'argentina': 'Buenos Aires', 'united kingdom': 'London', 'uk': 'London',
+      'france': 'Paris', 'germany': 'Berlin', 'italy': 'Rome', 'spain': 'Madrid', 'portugal': 'Lisbon',
+      'netherlands': 'Amsterdam', 'belgium': 'Brussels', 'switzerland': 'Bern', 'sweden': 'Stockholm',
+      'norway': 'Oslo', 'finland': 'Helsinki', 'poland': 'Warsaw', 'greece': 'Athens', 'turkey': 'Ankara',
+      'russia': 'Moscow', 'ukraine': 'Kyiv', 'japan': 'Tokyo', 'china': 'Beijing', 'south korea': 'Seoul',
+      'india': 'New Delhi', 'indonesia': 'Jakarta', 'thailand': 'Bangkok', 'vietnam': 'Hanoi',
+      'philippines': 'Manila', 'australia': 'Canberra', 'new zealand': 'Wellington', 'egypt': 'Cairo',
+      'south africa': 'Pretoria (executive), Cape Town (legislative)', 'nigeria': 'Abuja', 'kenya': 'Nairobi',
+      'saudi arabia': 'Riyadh', 'united arab emirates': 'Abu Dhabi', 'israel': 'Jerusalem'
+    };
+
+    const PERIODIC_ELEMENTS = {
+      'h': [1, 'Hydrogen', 1.008], 'hydrogen': [1, 'Hydrogen', 1.008],
+      'he': [2, 'Helium', 4.0026], 'helium': [2, 'Helium', 4.0026],
+      'li': [3, 'Lithium', 6.94], 'lithium': [3, 'Lithium', 6.94],
+      'c': [6, 'Carbon', 12.011], 'carbon': [6, 'Carbon', 12.011],
+      'n': [7, 'Nitrogen', 14.007], 'nitrogen': [7, 'Nitrogen', 14.007],
+      'o': [8, 'Oxygen', 15.999], 'oxygen': [8, 'Oxygen', 15.999],
+      'ne': [10, 'Neon', 20.180], 'neon': [10, 'Neon', 20.180],
+      'na': [11, 'Sodium', 22.990], 'sodium': [11, 'Sodium', 22.990],
+      'mg': [12, 'Magnesium', 24.305], 'magnesium': [12, 'Magnesium', 24.305],
+      'al': [13, 'Aluminum', 26.982], 'aluminum': [13, 'Aluminum', 26.982],
+      'si': [14, 'Silicon', 28.085], 'silicon': [14, 'Silicon', 28.085],
+      'cl': [17, 'Chlorine', 35.45], 'chlorine': [17, 'Chlorine', 35.45],
+      'k': [19, 'Potassium', 39.098], 'potassium': [19, 'Potassium', 39.098],
+      'ca': [20, 'Calcium', 40.078], 'calcium': [20, 'Calcium', 40.078],
+      'fe': [26, 'Iron', 55.845], 'iron': [26, 'Iron', 55.845],
+      'cu': [29, 'Copper', 63.546], 'copper': [29, 'Copper', 63.546],
+      'zn': [30, 'Zinc', 65.38], 'zinc': [30, 'Zinc', 65.38],
+      'ag': [47, 'Silver', 107.87], 'silver': [47, 'Silver', 107.87],
+      'au': [79, 'Gold', 196.97], 'gold': [79, 'Gold', 196.97],
+      'hg': [80, 'Mercury', 200.59], 'mercury': [80, 'Mercury', 200.59],
+      'pb': [82, 'Lead', 207.2], 'lead': [82, 'Lead', 207.2],
+      'u': [92, 'Uranium', 238.03], 'uranium': [92, 'Uranium', 238.03]
+    };
+
+    function cryoIsPrime(n) {
+      if (n < 2) return false;
+      if (n === 2 || n === 3) return true;
+      if (n % 2 === 0 || n % 3 === 0) return false;
+      const limit = Math.floor(Math.sqrt(n));
+      for (let i = 5; i <= limit; i += 6) {
+        if (n % i === 0 || n % (i + 2) === 0) return false;
+      }
+      return true;
+    }
+
+    function cryoPrimeFactors(n) {
+      const factors = [];
+      let num = n;
+      while (num % 2 === 0) { factors.push(2); num /= 2; }
+      for (let i = 3; i * i <= num; i += 2) {
+        while (num % i === 0) { factors.push(i); num /= i; }
+      }
+      if (num > 2) factors.push(num);
+      return factors;
+    }
+
+    function cryoToRoman(num) {
+      if (num <= 0 || num > 3999) return null;
+      const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+      let out = '';
+      for (const [val, sym] of map) {
+        while (num >= val) { out += sym; num -= val; }
+      }
+      return out;
+    }
+
+    function resolveCryoInstantAnswer(rawQuery) {
+      const q = rawQuery.trim();
+      const lower = q.toLowerCase().replace(/\?+$/, '').trim();
+      const stripped = lower.replace(/^(what is|what's|whats|who is|define|explain|tell me about|how does|calculate|compute|solve|find|convert)\s+/i, '').trim();
+
+      // 1. Direct Knowledge Bank hit (exact or keyword match)
+      const bankHit = CRYO_KNOWLEDGE_BANK[lower] || CRYO_KNOWLEDGE_BANK[stripped] ||
+        Object.entries(CRYO_KNOWLEDGE_BANK).find(([k]) => lower === k || stripped.includes(k))?.[1];
+      if (bankHit) {
+        return {
+          title: q,
+          instantValue: null,
+          summary: bankHit.summary,
+          facts: bankHit.facts,
+          deepDive: bankHit.deepDive,
+          wikiFallback: true
+        };
+      }
+
+      // 2. State & Country Capitals
+      const capMatch = lower.match(/(?:capital of|what is the capital of)\s+(.+)/);
+      if (capMatch) {
+        const place = capMatch[1].trim();
+        if (US_STATES_CAPITALS[place]) {
+          const cap = US_STATES_CAPITALS[place];
+          return {
+            title: `Capital of ${place.replace(/\b\w/g, c => c.toUpperCase())}`,
+            instantValue: cap,
+            instantSub: `U.S. State Capital`,
+            summary: `The capital city of ${place.replace(/\b\w/g, c => c.toUpperCase())} is ${cap}.`,
+            facts: [`State: ${place.replace(/\b\w/g, c => c.toUpperCase())}`, `Capital: ${cap}`, `Country: United States`],
+            deepDive: `${cap} serves as the seat of state government and legislative center for ${place.replace(/\b\w/g, c => c.toUpperCase())}.`
+          };
+        }
+        if (WORLD_CAPITALS[place]) {
+          const cap = WORLD_CAPITALS[place];
+          return {
+            title: `Capital of ${place.replace(/\b\w/g, c => c.toUpperCase())}`,
+            instantValue: cap,
+            instantSub: `National Capital`,
+            summary: `The capital city of ${place.replace(/\b\w/g, c => c.toUpperCase())} is ${cap}.`,
+            facts: [`Country: ${place.replace(/\b\w/g, c => c.toUpperCase())}`, `Capital: ${cap}`, `Category: World Geography`],
+            deepDive: `${cap} is the political, cultural, and administrative capital of ${place.replace(/\b\w/g, c => c.toUpperCase())}.`
+          };
+        }
+      }
+
+      // 3. Periodic Table Element lookup
+      const elemMatch = lower.match(/^(?:element\s+)?([a-z]+)(?:\s+element|\s+atomic\s+(?:number|mass))?$/);
+      if (elemMatch && PERIODIC_ELEMENTS[elemMatch[1]]) {
+        const [num, name, mass] = PERIODIC_ELEMENTS[elemMatch[1]];
+        return {
+          title: `${name} (Atomic Number ${num})`,
+          instantValue: `${name} • #${num}`,
+          instantSub: `Atomic Mass: ${mass} u`,
+          summary: `${name} is a chemical element with atomic number ${num} and standard atomic weight ${mass} u on the Periodic Table.`,
+          facts: [`Element Name: ${name}`, `Atomic Number (Protons): ${num}`, `Atomic Mass: ${mass} u`],
+          deepDive: `Each neutral atom of ${name} contains ${num} protons in its nucleus and ${num} electrons orbiting in its shells.`
+        };
+      }
+
+      // 4. Prime Number & Prime Factorization checks
+      const primeCheck = lower.match(/^is\s+(\d+)\s+(?:a\s+)?prime(?:\s+number)?$/);
+      if (primeCheck) {
+        const n = parseInt(primeCheck[1], 10);
+        if (n <= 1000000000000) {
+          const isP = cryoIsPrime(n);
+          const factors = isP ? [n] : cryoPrimeFactors(n);
+          return {
+            title: `Prime Number Check: ${n.toLocaleString()}`,
+            instantValue: isP ? 'Yes — Prime' : 'No — Composite',
+            instantSub: isP ? `${n.toLocaleString()} is only divisible by 1 and itself` : `Prime factorization: ${factors.join(' × ')}`,
+            summary: isP
+              ? `${n.toLocaleString()} is a prime number because its only positive divisors are 1 and ${n.toLocaleString()}.`
+              : `${n.toLocaleString()} is not a prime number. Its prime factorization is ${factors.join(' × ')}.`,
+            facts: [`Number: ${n.toLocaleString()}`, `Classification: ${isP ? 'Prime Number' : 'Composite Number'}`, `Prime Factors: ${factors.join(' × ')}`],
+            deepDive: `Prime numbers greater than 1 have no positive divisors other than 1 and themselves, forming the multiplicative building blocks of all integers.`
+          };
+        }
+      }
+
+      const factorMatch = lower.match(/^(?:prime\s+)?factor(?:ization|s)?\s+(?:of\s+)?(\d+)$/);
+      if (factorMatch) {
+        const n = parseInt(factorMatch[1], 10);
+        if (n >= 2 && n <= 1000000000000) {
+          const pf = cryoPrimeFactors(n);
+          return {
+            title: `Prime Factorization of ${n.toLocaleString()}`,
+            instantValue: pf.join(' × '),
+            instantSub: `${pf.length} prime factor(s)`,
+            summary: `The prime factorization of ${n.toLocaleString()} is ${pf.join(' × ')}.`,
+            facts: [`Input: ${n.toLocaleString()}`, `Prime Factors: ${pf.join(' × ')}`, `Is Prime: ${pf.length === 1 ? 'Yes' : 'No'}`],
+            deepDive: `By the Fundamental Theorem of Arithmetic, every integer greater than 1 has a unique representation as a product of prime numbers.`
+          };
+        }
+      }
+
+      // 5. GCD & LCM
+      const gcdMatch = lower.match(/^(gcd|gcf|lcm)\s+(?:of\s+)?(\d+)\s*(?:and|,|\s)\s*(\d+)$/);
+      if (gcdMatch) {
+        const op = gcdMatch[1];
+        const a = parseInt(gcdMatch[2], 10);
+        const b = parseInt(gcdMatch[3], 10);
+        const gcdFn = (x, y) => y === 0 ? x : gcdFn(y, x % y);
+        const g = gcdFn(a, b);
+        const l = (a * b) / g;
+        const ans = op === 'lcm' ? l : g;
+        return {
+          title: `${op.toUpperCase()} of ${a.toLocaleString()} and ${b.toLocaleString()}`,
+          instantValue: ans.toLocaleString(),
+          instantSub: `GCD = ${g.toLocaleString()} • LCM = ${l.toLocaleString()}`,
+          summary: `The ${op.toUpperCase()} of ${a.toLocaleString()} and ${b.toLocaleString()} is ${ans.toLocaleString()}.`,
+          facts: [`Greatest Common Divisor (GCD): ${g.toLocaleString()}`, `Least Common Multiple (LCM): ${l.toLocaleString()}`, `Relation: GCD × LCM = ${(a * b).toLocaleString()}`],
+          deepDive: `Computed using the Euclidean algorithm, where GCD(${a}, ${b}) = ${g} and LCM(${a}, ${b}) = (${a} × ${b}) / ${g} = ${l}.`
+        };
+      }
+
+      // 6. Geometry Solvers (Circle, Triangle, Sphere, Cylinder, Pythagorean)
+      const circleMatch = lower.match(/^(?:area|circumference)\s+(?:of\s+(?:a\s+)?)?circle\s+(?:with\s+)?(?:radius|r)\s*=?\s*(\d+\.?\d*)$/);
+      if (circleMatch) {
+        const r = parseFloat(circleMatch[1]);
+        const area = Math.PI * r * r;
+        const circ = 2 * Math.PI * r;
+        const isArea = lower.startsWith('area');
+        return {
+          title: `Circle Geometry (Radius = ${r})`,
+          instantValue: isArea ? `Area ≈ ${area.toFixed(4)}` : `Circumference ≈ ${circ.toFixed(4)}`,
+          instantSub: `Area = πr² = ${area.toFixed(2)} • Circumference = 2πr = ${circ.toFixed(2)}`,
+          summary: `For a circle with radius r = ${r}, the area is πr² ≈ ${area.toFixed(4)} and the circumference is 2πr ≈ ${circ.toFixed(4)}.`,
+          facts: [`Radius (r): ${r}`, `Area (πr²): ${area.toFixed(4)}`, `Circumference (2πr): ${circ.toFixed(4)}`],
+          deepDive: `Using π ≈ 3.14159265, diameter d = ${2 * r}, area = π × ${r}² = ${area.toFixed(4)}, and perimeter = 2 × π × ${r} = ${circ.toFixed(4)}.`
+        };
+      }
+
+      const pythMatch = lower.match(/^pythagorean\s+(\d+\.?\d*)\s+(?:and\s+)?(\d+\.?\d*)$/);
+      if (pythMatch) {
+        const a = parseFloat(pythMatch[1]);
+        const b = parseFloat(pythMatch[2]);
+        const c = Math.sqrt(a * a + b * b);
+        return {
+          title: `Pythagorean Theorem (a = ${a}, b = ${b})`,
+          instantValue: `c = ${Number.isInteger(c) ? c : c.toFixed(4)}`,
+          instantSub: `√(${a}² + ${b}²) = √${a * a + b * b}`,
+          summary: `For a right triangle with legs a = ${a} and b = ${b}, the hypotenuse c = √(${a}² + ${b}²) ≈ ${c.toFixed(4)}.`,
+          facts: [`Leg a: ${a}`, `Leg b: ${b}`, `Hypotenuse c: ${c.toFixed(4)}`],
+          deepDive: `By a² + b² = c², ${a}² + ${b}² = ${a * a} + ${b * b} = ${a * a + b * b}, taking the square root yields ${c.toFixed(4)}.`
+        };
+      }
+
+      // 7. Percentages (e.g., "25% of 480")
+      const pctMatch = lower.match(/^(\d+\.?\d*)\s*%\s*of\s*(\d+\.?\d*)$/);
+      if (pctMatch) {
+        const pct = parseFloat(pctMatch[1]);
+        const num = parseFloat(pctMatch[2]);
+        const ans = (pct / 100) * num;
+        return {
+          title: `Percentage Calculation`,
+          instantValue: ans.toLocaleString(),
+          instantSub: `${pct}% × ${num} = ${ans}`,
+          summary: `${pct}% of ${num.toLocaleString()} is ${ans.toLocaleString()}.`,
+          facts: [`Percentage: ${pct}% (${pct / 100})`, `Base Value: ${num.toLocaleString()}`, `Result: ${ans.toLocaleString()}`],
+          deepDive: `Convert ${pct}% to a decimal (${pct / 100}) and multiply by ${num} to get ${ans}.`
+        };
+      }
+
+      // 8. Unit Conversions & Number Bases & Roman Numerals
+      const convMatch = lower.match(/^(-?\d+\.?\d*)\s*(miles|mi|km|kilometers|lbs|pounds|kg|kilograms|feet|ft|meters|m|inches|in|cm|centimeters|gallons|gal|liters|l|f|fahrenheit|c|celsius|hours|hr|minutes|min|seconds|sec)\s+(?:to|in)\s+(miles|mi|km|kilometers|lbs|pounds|kg|kilograms|feet|ft|meters|m|inches|in|cm|centimeters|gallons|gal|liters|l|f|fahrenheit|c|celsius|hours|hr|minutes|min|seconds|sec)$/);
+      if (convMatch) {
+        const val = parseFloat(convMatch[1]);
+        const u1 = convMatch[2];
+        const u2 = convMatch[3];
+        let out = null;
+        if ((u1 === 'miles' || u1 === 'mi') && (u2 === 'km' || u2 === 'kilometers')) out = val * 1.609344;
+        else if ((u1 === 'km' || u1 === 'kilometers') && (u2 === 'miles' || u2 === 'mi')) out = val / 1.609344;
+        else if ((u1 === 'lbs' || u1 === 'pounds') && (u2 === 'kg' || u2 === 'kilograms')) out = val * 0.45359237;
+        else if ((u1 === 'kg' || u1 === 'kilograms') && (u2 === 'lbs' || u2 === 'pounds')) out = val / 0.45359237;
+        else if ((u1 === 'feet' || u1 === 'ft') && (u2 === 'meters' || u2 === 'm')) out = val * 0.3048;
+        else if ((u1 === 'meters' || u1 === 'm') && (u2 === 'feet' || u2 === 'ft')) out = val / 0.3048;
+        else if ((u1 === 'inches' || u1 === 'in') && (u2 === 'cm' || u2 === 'centimeters')) out = val * 2.54;
+        else if ((u1 === 'cm' || u1 === 'centimeters') && (u2 === 'inches' || u2 === 'in')) out = val / 2.54;
+        else if ((u1 === 'gallons' || u1 === 'gal') && (u2 === 'liters' || u2 === 'l')) out = val * 3.78541178;
+        else if ((u1 === 'liters' || u1 === 'l') && (u2 === 'gallons' || u2 === 'gal')) out = val / 3.78541178;
+        else if ((u1 === 'f' || u1 === 'fahrenheit') && (u2 === 'c' || u2 === 'celsius')) out = (val - 32) * (5 / 9);
+        else if ((u1 === 'c' || u1 === 'celsius') && (u2 === 'f' || u2 === 'fahrenheit')) out = (val * 9 / 5) + 32;
+        else if ((u1 === 'hours' || u1 === 'hr') && (u2 === 'minutes' || u2 === 'min')) out = val * 60;
+        else if ((u1 === 'hours' || u1 === 'hr') && (u2 === 'seconds' || u2 === 'sec')) out = val * 3600;
+        else if ((u1 === 'minutes' || u1 === 'min') && (u2 === 'seconds' || u2 === 'sec')) out = val * 60;
+        if (out !== null) {
+          const fmt = Number(out.toFixed(4));
+          return {
+            title: `Unit Conversion: ${val} ${u1} to ${u2}`,
+            instantValue: `${fmt} ${u2}`,
+            instantSub: `${val} ${u1} = ${fmt} ${u2}`,
+            summary: `${val} ${u1} is equal to ${fmt} ${u2}.`,
+            facts: [`Input: ${val} ${u1}`, `Converted: ${fmt} ${u2}`, `Precision: 4 decimal places`],
+            deepDive: `Cryo Search converted ${val} ${u1} directly into ${u2} using standard international measurement ratios.`
+          };
+        }
+      }
+
+      const baseMatch = lower.match(/^(\d+)\s+(?:in|to)\s+(binary|hex|hexadecimal|octal|roman|roman numerals)$/);
+      if (baseMatch) {
+        const n = parseInt(baseMatch[1], 10);
+        const target = baseMatch[2];
+        let converted = null;
+        if (target === 'binary') converted = n.toString(2);
+        else if (target.startsWith('hex')) converted = '0x' + n.toString(16).toUpperCase();
+        else if (target === 'octal') converted = '0o' + n.toString(8);
+        else if (target.startsWith('roman')) converted = cryoToRoman(n);
+        if (converted) {
+          return {
+            title: `${n} in ${target.toUpperCase()}`,
+            instantValue: converted,
+            instantSub: `Decimal ${n} → ${target}`,
+            summary: `The decimal number ${n} in ${target} is ${converted}.`,
+            facts: [`Decimal (Base 10): ${n}`, `Converted (${target}): ${converted}`, `Binary: ${n.toString(2)}`],
+            deepDive: `Number base conversion translates base-10 integers into ${target} representation.`
+          };
+        }
+      }
+
+      // 9. ELA Word Analyzer & Reading Time Calculator
+      const wordMatch = lower.match(/^(?:analyze\s+word|word\s+analysis)\s+([a-z]+)$/);
+      if (wordMatch) {
+        const w = wordMatch[1];
+        const vowels = (w.match(/[aeiouy]/g) || []).length;
+        const consonants = w.length - vowels;
+        const syllables = Math.max(1, (w.match(/[aeiouy]{1,2}/g) || []).length);
+        const isPal = w === w.split('').reverse().join('');
+        return {
+          title: `ELA Word Analysis: "${w}"`,
+          instantValue: `${w.length} Letters • ~${syllables} Syllable(s)`,
+          instantSub: `${vowels} vowels • ${consonants} consonants • Palindrome: ${isPal ? 'Yes' : 'No'}`,
+          summary: `The word "${w}" has ${w.length} letters, ${vowels} vowels, ${consonants} consonants, and approximately ${syllables} syllable(s).`,
+          facts: [`Length: ${w.length} characters`, `Vowels / Consonants: ${vowels} / ${consonants}`, `Palindrome: ${isPal ? 'Yes' : 'No'}`],
+          deepDive: `Syllable estimation groups consecutive vowel clusters, while palindrome detection checks forward-and-backward symmetry.`
+        };
+      }
+
+      const readMatch = lower.match(/^reading\s+time\s+(?:for\s+)?(\d+)\s+words$/);
+      if (readMatch) {
+        const words = parseInt(readMatch[1], 10);
+        const mins = (words / 238).toFixed(1);
+        const speakMins = (words / 130).toFixed(1);
+        return {
+          title: `Reading & Speech Time for ${words.toLocaleString()} Words`,
+          instantValue: `~${mins} min read`,
+          instantSub: `~${speakMins} min speaking time`,
+          summary: `At an average silent reading speed of 238 words per minute, ${words.toLocaleString()} words takes about ${mins} minutes to read (or ${speakMins} minutes to speak aloud).`,
+          facts: [`Word Count: ${words.toLocaleString()} words`, `Silent Reading (~238 WPM): ${mins} minutes`, `Public Speaking (~130 WPM): ${speakMins} minutes`],
+          deepDive: `Average adult silent reading speed ranges from 200–260 WPM, while clear presentation speech averages 120–150 WPM.`
+        };
+      }
+
+      // 10. Century Lookup (e.g., "what century is 1776")
+      const centuryMatch = lower.match(/^(?:what\s+)?century\s+(?:is|was)\s+(\d{1,4})$/);
+      if (centuryMatch) {
+        const yr = parseInt(centuryMatch[1], 10);
+        const cent = Math.ceil(yr / 100);
+        const suffix = cent % 100 >= 11 && cent % 100 <= 13 ? 'th' : ({1:'st',2:'nd',3:'rd'}[cent % 10] || 'th');
+        return {
+          title: `Historical Century for Year ${yr}`,
+          instantValue: `${cent}${suffix} Century`,
+          instantSub: `Years ${(cent - 1) * 100 + 1} – ${cent * 100}`,
+          summary: `The year ${yr} is in the ${cent}${suffix} century (which spans from ${(cent - 1) * 100 + 1} to ${cent * 100}).`,
+          facts: [`Year: ${yr}`, `Century: ${cent}${suffix} Century`, `Span: ${(cent - 1) * 100 + 1}–${cent * 100} CE`],
+          deepDive: `Centuries are numbered starting from Year 1, so years 1–100 form the 1st century and years 1901–2000 form the 20th century.`
+        };
+      }
+
+      // 11. Linear algebra equation solver (e.g., "solve 3x + 7 = 22")
+      const algMatch = lower.match(/^(?:solve\s+)?(-?\d*\.?\d*)\s*x\s*([+-]\s*\d+\.?\d*)?\s*=\s*(-?\d+\.?\d*)$/);
+      if (algMatch) {
+        const aStr = algMatch[1];
+        const a = aStr === '' || aStr === '+' ? 1 : (aStr === '-' ? -1 : parseFloat(aStr));
+        const b = algMatch[2] ? parseFloat(algMatch[2].replace(/\s+/g, '')) : 0;
+        const c = parseFloat(algMatch[3]);
+        if (a !== 0 && !isNaN(a) && !isNaN(b) && !isNaN(c)) {
+          const x = (c - b) / a;
+          const xFmt = Number.isInteger(x) ? x : Number(x.toFixed(6));
+          return {
+            title: 'Algebra Equation Solver',
+            instantValue: 'x = ' + xFmt,
+            instantSub: `Step 1: ${a}x = ${c - b}  →  Step 2: x = (${c - b}) / ${a} = ${xFmt}`,
+            summary: `Solving ${q} step by step gives x = ${xFmt}. Subtract ${b} from both sides to isolate ${a}x = ${c - b}, then divide by ${a}.`,
+            facts: [`Coefficient of x: ${a}`, `Constant term: ${b}`, `Verified solution: x = ${xFmt}`],
+            deepDive: `Substituting x = ${xFmt} back into the left side gives ${a}(${xFmt}) + (${b}) = ${c}, confirming the equation is balanced.`
+          };
+        }
+      }
+
+      // 12. Exact BigInt Multiplication up to 100 Trillion+ pairs
+      const bigMulMatch = lower.match(/^(\d+)\s*[*×x]\s*(\d+)$/);
+      if (bigMulMatch) {
+        const a = BigInt(bigMulMatch[1]);
+        const b = BigInt(bigMulMatch[2]);
+        const prod = a * b;
+        return {
+          title: 'Exact Arbitrary-Precision Multiplication',
+          instantValue: prod.toLocaleString(),
+          instantSub: `${a.toLocaleString()} × ${b.toLocaleString()}`,
+          summary: `${a.toLocaleString()} multiplied by ${b.toLocaleString()} equals ${prod.toLocaleString()}.`,
+          facts: [`Factor 1: ${a.toLocaleString()}`, `Factor 2: ${b.toLocaleString()}`, `Exact Product: ${prod.toLocaleString()}`],
+          deepDive: `Computed with arbitrary-precision BigInt arithmetic so even trillion-scale numbers remain 100% exact without rounding.`
+        };
+      }
+
+      // 13. Factorial (e.g., "20!")
+      const factMatch = lower.match(/^(\d+)\s*!$/);
+      if (factMatch) {
+        const n = parseInt(factMatch[1], 10);
+        if (n >= 0 && n <= 170) {
+          let res = 1n;
+          for (let i = 2n; i <= BigInt(n); i++) res *= i;
+          return {
+            title: `${n}! (Factorial)`,
+            instantValue: res.toString(),
+            instantSub: `${n} factorial equals the product of all positive integers up to ${n}`,
+            summary: `The factorial of ${n} (${n}!) is ${res.toString()}.`,
+            facts: [`Notation: ${n}!`, `Digit count: ${res.toString().length} digits`, `Used in permutations & combinations`],
+            deepDive: `Factorials count the number of distinct ways to arrange ${n} unique items in sequence (${n} × ${Math.max(1, n - 1)} × ... × 1).`
+          };
+        }
+      }
+
+      // 14. Multi-term arithmetic & square root / trig expressions
+      let expr = lower
+        .replace(/^(what is|calculate|compute|solve|evaluate|sqrt of|square root of)\s+/i, (m) =>
+          /sqrt|square root/i.test(m) ? 'Math.sqrt(' : '')
+        .replace(/[×x]/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/\^/g, '**');
+      if (expr.startsWith('Math.sqrt(') && !expr.endsWith(')')) expr += ')';
+
+      if (/^(?:Math\.sqrt\()?[0-9+\-*/().\s*]+$/.test(expr) && /[0-9]/.test(expr)) {
+        try {
+          const val = Function('"use strict"; return (' + expr + ')')();
+          if (typeof val === 'number' && isFinite(val)) {
+            const formatted = Number.isInteger(val) ? val.toLocaleString() : Number(val.toFixed(8)).toString();
+            return {
+              title: 'Instant Math Calculation',
+              instantValue: formatted,
+              instantSub: `${q} = ${formatted}`,
+              summary: `The answer to ${q} is ${formatted}.`,
+              facts: [`Expression: ${q}`, `Exact Result: ${formatted}`, `Type: ${Number.isInteger(val) ? 'Integer' : 'Decimal'}`],
+              deepDive: `Cryo Search evaluated "${q}" using standard order of operations (PEMDAS) to arrive at ${formatted}.`
+            };
+          }
+        } catch (err) {}
+      }
+
+      // 15. Universal topic fallback (enriched dynamically via live Wikipedia API if online!)
+      return {
+        title: q,
+        instantValue: null,
+        summary: `Gathering complete knowledge on "${q}"...`,
+        facts: [
+          `Query Topic: "${q}"`,
+          'Universal Cryo Knowledge & Reference Index',
+          'Check Pictures Gallery & Deep Dive tabs for more'
+        ],
+        deepDive: `"${q}" is indexed in Cryo Search. Explore the overview, key points, and visual gallery above.`,
+        wikiFallback: true
+      };
+    }
+
+    const CRYO_AUTOCOMPLETE_POOL = [
+      '2 + 2', '12 × 12', 'solve 3x + 7 = 22', '20!', 'is 9973 a prime number',
+      'prime factorization of 360', 'gcd of 48 and 180', 'area of circle radius 8',
+      'pythagorean 5 and 12', '25% of 480', '100 miles to km', '72 f to c',
+      '2026 in roman numerals', '255 in binary', 'photosynthesis', 'cellular respiration',
+      'mitosis', 'meiosis', 'dna', 'periodic table', 'newton laws', 'gravity',
+      'solar system', 'black hole', 'metaphor', 'simile', 'thesis statement',
+      'world war 2', 'american revolution', 'artificial intelligence', 'python',
+      'javascript', 'capital of north carolina', 'capital of japan', 'what century is 1776',
+      'analyze word extraordinary', 'reading time for 1500 words'
+    ];
+
+    function handleLiveFilter(val) {
+      liveFilterText = val;
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !val.trim());
+      showSearchSuggestions();
+    }
+
+    function showSearchSuggestions() {
+      const box = document.getElementById('google-autocomplete-box');
+      const input = document.getElementById('universal-search-input');
+      if (!box || !input) return;
+      const q = input.value.trim();
+      if (!q) {
+        box.classList.add('hidden');
+        return;
+      }
+      const lower = q.toLowerCase();
+      const matchedPool = CRYO_AUTOCOMPLETE_POOL.filter(item => item.toLowerCase().includes(lower) && item.toLowerCase() !== lower).slice(0, 4);
+      const suggestions = [q, ...matchedPool, `${q} explained`, `${q} key facts`].slice(0, 6);
+      box.innerHTML = suggestions.map(s => `
+        <button type="button" onclick="selectSuggestion('${s.replace(/'/g, "\\'")}')" class="w-full text-left px-5 py-2.5 hover:bg-slate-800 text-xs sm:text-sm text-slate-200 flex items-center gap-2.5 border-b border-slate-800/60 last:border-b-0 transition">
+          <span class="text-cyan-400">❄️</span>
+          <span>${s}</span>
+        </button>
+      `).join('');
+      box.classList.remove('hidden');
+    }
+
+    function selectSuggestion(text) {
+      const input = document.getElementById('universal-search-input');
+      if (input) input.value = text;
+      document.getElementById('google-autocomplete-box').classList.add('hidden');
+      runCryoSearch(text);
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('universal-search-input');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      document.getElementById('google-autocomplete-box').classList.add('hidden');
+    }
+
+    function closeSearchPanel() {
+      document.getElementById('search-answer-panel').classList.add('hidden');
+    }
+
+    function handleUniversalSearchSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('universal-search-input');
+      const q = (input && input.value.trim()) || '';
+      if (!q) return;
+      document.getElementById('google-autocomplete-box').classList.add('hidden');
+      runCryoSearch(q);
+    }
+
+    function switchGoogleTab(tab) {
+      currentGoogleTab = tab;
+      ['all', 'images', 'facts', 'news'].forEach(t => {
+        const btn = document.getElementById('gtab-' + t);
+        const view = document.getElementById('gview-' + t);
+        if (btn) {
+          btn.className = t === tab
+            ? 'gtab-btn px-3.5 py-1.5 rounded-full bg-cyan-500 text-slate-950 font-extrabold transition shrink-0'
+            : 'gtab-btn px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition shrink-0';
+        }
+        if (view) view.classList.toggle('hidden', t !== tab);
+      });
+    }
+
+    function runCryoSearch(query) {
+      lastSearchQuery = query;
+      const panel = document.getElementById('search-answer-panel');
+      const loading = document.getElementById('search-loading');
+      const widget = document.getElementById('search-instant-widget');
+
+      panel.classList.remove('hidden');
+      loading.classList.remove('hidden');
+      document.getElementById('gview-all').classList.add('hidden');
+      document.getElementById('search-result-heading').textContent = query;
+      document.getElementById('search-query-subtitle').textContent = 'Cryo Search • Instant Knowledge & Visuals';
+      document.getElementById('gallery-query-label').textContent = query;
+
+      const resolved = resolveCryoInstantAnswer(query);
+
+      const renderResolved = (data, liveImgUrl = null) => {
+        loading.classList.add('hidden');
+
+        if (data.instantValue) {
+          widget.classList.remove('hidden');
+          document.getElementById('instant-widget-value').textContent = data.instantValue;
+          document.getElementById('instant-widget-sub').textContent = data.instantSub || '';
+        } else {
+          widget.classList.add('hidden');
+        }
+
+        document.getElementById('search-result-body').innerHTML = `
+          <div class="text-xs font-extrabold uppercase tracking-wider text-cyan-400 mb-2">❄️ Complete Cryo Answer</div>
+          <p class="text-slate-100 leading-relaxed">${data.summary}</p>
+        `;
+
+        const factsHtml = data.facts.map((f, i) => `
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800">
+            <div class="text-[10px] font-extrabold uppercase text-cyan-300 mb-1">Key Point #${i + 1}</div>
+            <div class="text-xs text-slate-200 font-medium">${f}</div>
+          </div>
+        `).join('');
+        document.getElementById('search-key-facts').innerHTML = factsHtml;
+        document.getElementById('search-facts-detailed').innerHTML = factsHtml;
+
+        document.getElementById('search-news-detailed').innerHTML = `
+          <h4 class="text-base font-black text-white">Deep Dive: ${data.title || query}</h4>
+          <p>${data.deepDive}</p>
+        `;
+
+        const related = [`What is ${query}?`, `${query} examples`, `${query} key facts`];
+        document.getElementById('search-related-list').innerHTML = related.map(r => `
+          <button type="button" onclick="selectSuggestion('${r.replace(/'/g, "\\'")}')" class="text-left px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-bold text-cyan-300 transition">
+            🔍 ${r}
+          </button>
+        `).join('');
+
+        const encoded = encodeURIComponent(query.slice(0, 28));
+        const fallbackUrl = `https://placehold.co/800x480/0f172a/38bdf8?text=${encoded}`;
+        const finalImg = liveImgUrl || fallbackUrl;
+        const imgEl = document.getElementById('search-generated-img');
+        const imgLoader = document.getElementById('search-image-loader');
+        imgLoader.classList.add('hidden');
+        imgEl.onerror = function() { this.onerror = null; this.src = fallbackUrl; };
+        imgEl.src = finalImg;
+        imgEl.classList.remove('hidden');
+        document.getElementById('search-image-caption').textContent = data.title || query;
+
+        galleryImagesList = liveImgUrl ? [liveImgUrl, fallbackUrl] : [fallbackUrl];
+        renderGalleryGrid(query);
+        switchGoogleTab('all');
+      };
+
+      if (resolved.wikiFallback && !resolved.instantValue) {
+        const cleanTopic = query.replace(/^(what is|what's|whats|who is|define|explain|tell me about|how does)\s+/i, '').replace(/\?+$/, '').trim();
+        fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTopic)}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(wiki => {
+            if (wiki && wiki.extract && wiki.type !== 'disambiguation') {
+              renderResolved({
+                title: wiki.title || query,
+                instantValue: null,
+                summary: wiki.extract,
+                facts: [
+                  wiki.description ? `Category: ${wiki.description}` : `Topic: ${wiki.title}`,
+                  `Verified encyclopedia summary for "${wiki.title}"`,
+                  `Explore full details in the Deep Dive & Pictures tabs`
+                ],
+                deepDive: wiki.extract
+              }, wiki.thumbnail && wiki.thumbnail.source ? wiki.thumbnail.source : null);
+            } else {
+              renderResolved({
+                ...resolved,
+                summary: `"${query}" refers to a topic across general knowledge, science, history, or reference studies. Try asking specific questions (e.g., "capital of Japan", "photosynthesis", "solve 3x + 7 = 22", "100 miles to km", or "is 9973 a prime number") for instant structured breakdowns.`
+              });
+            }
+          })
+          .catch(() => {
+            renderResolved({
+              ...resolved,
+              summary: `"${query}" is ready in Cryo Search. You can ask math equations, unit conversions, science & ELA concepts, capitals, prime checks, or any general topic.`
+            });
+          });
+      } else {
+        setTimeout(() => renderResolved(resolved), 120);
+      }
+    }
+
+    function renderGalleryGrid(query) {
+      const grid = document.getElementById('search-images-grid');
+      if (!grid) return;
+      grid.innerHTML = galleryImagesList.map((src, i) => `
+        <div class="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
+          <img src="${src}" alt="${query} visual ${i + 1}" class="w-full h-44 object-cover" />
+          <div class="p-2.5 text-xs text-slate-300 font-bold truncate">${query} — Visual #${i + 1}</div>
+        </div>
+      `).join('');
+    }
+
+    function generateMoreGalleryImages() {
+      const n = galleryImagesList.length + 1;
+      const encoded = encodeURIComponent(`${lastSearchQuery} #${n}`.slice(0, 30));
+      galleryImagesList.push(`https://placehold.co/800x480/1e1b4b/818cf8?text=${encoded}`);
+      renderGalleryGrid(lastSearchQuery);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        const input = document.getElementById('universal-search-input');
+        if (input) input.focus();
+      } else if (e.key === 'Escape') {
+        document.getElementById('google-autocomplete-box').classList.add('hidden');
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      const box = document.getElementById('google-autocomplete-box');
+      const input = document.getElementById('universal-search-input');
+      if (box && input && !box.contains(e.target) && e.target !== input) {
+        box.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
